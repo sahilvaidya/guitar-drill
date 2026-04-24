@@ -11,7 +11,7 @@ struct AnswerFeedback: Equatable {
     }
 
     var message: String {
-        isCorrect ? "\(selectedAnswer.rawValue) is correct." : "The correct note is \(correctAnswer.rawValue)."
+        isCorrect ? "\(selectedAnswer.rawValue) is correct." : "Try again."
     }
 }
 
@@ -23,11 +23,14 @@ final class PracticeSession {
     private let engine: QuizEngine
     private let statsStore: StatsStore
     private var scriptedPromptIndex: Int?
+    private var currentPromptIncorrectGuesses = 0
 
     private(set) var currentPrompt: QuizPrompt
     private(set) var feedback: AnswerFeedback?
-    private(set) var sessionCorrect = 0
+    private(set) var sessionSolvedPrompts = 0
     private(set) var sessionAttempts = 0
+    private(set) var sessionIncorrectGuesses = 0
+    private(set) var firstTryCorrectAnswers = 0
     private(set) var currentStreak = 0
     private(set) var lifetimeStats: LifetimeStats
 
@@ -53,7 +56,7 @@ final class PracticeSession {
     }
 
     func submit(answer: NoteName) {
-        guard feedback == nil else {
+        guard feedback?.isCorrect != true else {
             return
         }
 
@@ -61,13 +64,23 @@ final class PracticeSession {
         sessionAttempts += 1
 
         if isCorrect {
-            sessionCorrect += 1
+            sessionSolvedPrompts += 1
             currentStreak += 1
+
+            if currentPromptIncorrectGuesses == 0 {
+                firstTryCorrectAnswers += 1
+            }
         } else {
+            currentPromptIncorrectGuesses += 1
+            sessionIncorrectGuesses += 1
             currentStreak = 0
         }
 
-        lifetimeStats = statsStore.record(answerWasCorrect: isCorrect, streak: currentStreak)
+        lifetimeStats = statsStore.recordAttempt(
+            wasCorrect: isCorrect,
+            solvedOnFirstTry: isCorrect && currentPromptIncorrectGuesses == 0,
+            streak: currentStreak
+        )
         feedback = AnswerFeedback(
             selectedAnswer: answer,
             correctAnswer: currentPrompt.correctAnswer,
@@ -77,6 +90,7 @@ final class PracticeSession {
 
     func nextPrompt() {
         feedback = nil
+        currentPromptIncorrectGuesses = 0
 
         if let scriptedPromptIndex {
             currentPrompt = engine.prompt(at: scriptedPromptIndex)

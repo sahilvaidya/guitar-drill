@@ -5,24 +5,31 @@ final class FretboardTrainerUITests: XCTestCase {
         continueAfterFailure = false
     }
 
-    func testUserCanAnswerPromptAndAdvance() throws {
+    func testUserRetriesUntilCorrectAnswerThenAutoAdvances() throws {
         let app = XCUIApplication()
         app.launchArguments = ["UI_TEST_MODE", "-prompt-index", "0"]
         app.launch()
 
-        XCTAssertTrue(app.staticTexts["prompt_description"].exists)
+        let promptDescription = app.staticTexts["prompt_description"]
+        XCTAssertTrue(promptDescription.exists)
+        XCTAssertEqual(promptDescription.label, "Low E string, fret 0")
         XCTAssertTrue(app.otherElements["prompt_dot"].exists)
 
-        app.buttons["answer_E"].tap()
+        app.buttons["answer_F"].tap()
 
         let feedback = app.staticTexts["feedback_label"]
         XCTAssertTrue(feedback.waitForExistence(timeout: 2))
+        XCTAssertEqual(feedback.label, "Incorrect, Try again.")
+        XCTAssertEqual(promptDescription.label, "Low E string, fret 0")
+        XCTAssertFalse(app.buttons["next_note"].exists)
+
+        app.buttons["answer_E"].tap()
+
+        XCTAssertTrue(feedback.waitForExistence(timeout: 2))
         XCTAssertEqual(feedback.label, "Correct, E is correct.")
 
-        let nextButton = app.buttons["next_note"]
-        XCTAssertTrue(nextButton.exists)
-        nextButton.tap()
-
-        XCTAssertTrue(feedback.waitForNonExistence(timeout: 2))
+        let advancedPrompt = NSPredicate(format: "label == %@", "Low E string, fret 1")
+        expectation(for: advancedPrompt, evaluatedWith: promptDescription)
+        waitForExpectations(timeout: 4)
     }
 }

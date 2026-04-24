@@ -41,8 +41,9 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - Generate prompts only for natural-note positions.
 - Show one dot at a time.
 - Present note-name answer buttons.
-- Lock the answer state after a tap and show correct/incorrect feedback.
-- Allow advancing to the next prompt after feedback.
+- Show incorrect feedback without advancing when the user picks the wrong note.
+- Keep the same prompt active until the user selects the correct note.
+- After a correct answer, show feedback briefly and automatically advance to the next prompt without a manual next button.
 
 ### Phase 3: Local Progress Tracking
 - Track session attempts, correct answers, and current streak.
@@ -61,8 +62,10 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - The fretboard shows six strings and frets `0...12`.
 - The active prompt is represented by a visible dot on one position.
 - The answer area shows note buttons for `A`, `B`, `C`, `D`, `E`, `F`, and `G`.
-- After one tap, the app shows correct/incorrect feedback and does not allow a second answer for the same prompt.
-- The user can move to the next prompt without relaunching the app.
+- Wrong answers show immediate incorrect feedback and keep the current prompt active.
+- The user can keep trying answers until selecting the correct note.
+- Correct answers show brief success feedback, then the app automatically advances to the next prompt after a short delay.
+- The drill flow does not require a manual next button.
 
 ### Data And Logic
 - Prompt generation excludes non-natural notes for v1.
@@ -72,13 +75,31 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 ### Tests
 - Unit tests cover fret-to-note mapping and quiz answer evaluation.
 - UI smoke coverage verifies launch, answer selection, and feedback rendering.
+- UI coverage verifies wrong answers do not advance, correct answers auto-advance, and no manual next button is required.
 
 ## Non-Goals
-- Chromatic note answers
 - Alternate tunings
 - Full-neck practice beyond the 12th fret
 - Game timers, combo systems, or spaced repetition in v1
 - Backend services, sync, accounts, or audio recognition
+
+## Completed Features
+- Native SwiftUI iPhone project scaffolded with offline-only app architecture.
+- Standard-tuned six-string fretboard renders frets `0...12` with one active prompt dot.
+- Natural-note-only quiz loop generates prompts and accepts `A` through `G` answers.
+- Wrong answers show immediate incorrect feedback and keep the current prompt active.
+- The user can retry bad answers until selecting the correct note.
+- Correct answers show brief success feedback and automatically advance without a manual `Next Note` button.
+- Session and lifetime stats distinguish attempts, solved prompts, first-try correct answers, repeated incorrect guesses, and best streak.
+- Unit tests cover note mapping, quiz evaluation, and stats persistence/backward-compatible stats decoding.
+- UI test covers wrong-answer retry, no manual next button, and correct-answer auto-advance.
+
+## High-Priority Roadmap
+- Add chromatic note support so prompts and answer choices can include sharps and flats, while preserving natural-note-only practice as a selectable option.
+- Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
+
+## Lower-Priority Roadmap
+- Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
 
 ## Next Agent Task
 Add a lightweight settings and review layer without widening the core scope:

@@ -26,19 +26,22 @@ struct ContentView: View {
 
                 answerGrid
 
-                if session.feedback != nil {
-                    Button("Next Note") {
-                        session.nextPrompt()
-                    }
-                    .buttonStyle(PrimaryActionButtonStyle())
-                    .accessibilityIdentifier("next_note")
-                }
-
                 lifetimeStats
             }
             .padding(20)
         }
         .background(Color(uiColor: .systemGroupedBackground))
+        .task(id: session.feedback) {
+            guard session.feedback?.isCorrect == true else {
+                return
+            }
+
+            try? await Task.sleep(for: .seconds(1.5))
+
+            if !Task.isCancelled {
+                session.nextPrompt()
+            }
+        }
     }
 
     private var header: some View {
@@ -47,7 +50,8 @@ struct ContentView: View {
                 .font(.largeTitle.bold())
 
             HStack(spacing: 12) {
-                statChip(title: "Session", value: "\(session.sessionCorrect)/\(max(session.sessionAttempts, 1))")
+                statChip(title: "Solved", value: "\(session.sessionSolvedPrompts)")
+                statChip(title: "Guesses", value: "\(session.sessionAttempts)")
                 statChip(title: "Streak", value: "\(session.currentStreak)")
             }
         }
@@ -75,7 +79,7 @@ struct ContentView: View {
                     session.submit(answer: note)
                 }
                 .buttonStyle(AnswerChoiceButtonStyle(state: buttonState(for: note)))
-                .disabled(session.feedback != nil)
+                .disabled(session.feedback?.isCorrect == true)
                 .accessibilityIdentifier("answer_\(note.rawValue)")
             }
         }
@@ -104,7 +108,7 @@ struct ContentView: View {
 
             HStack(spacing: 12) {
                 statChip(title: "Answered", value: "\(session.lifetimeStats.totalAnswers)")
-                statChip(title: "Correct", value: "\(session.lifetimeStats.correctAnswers)")
+                statChip(title: "Solved", value: "\(session.lifetimeStats.solvedPrompts)")
                 statChip(title: "Best Streak", value: "\(session.lifetimeStats.bestStreak)")
             }
         }
@@ -130,27 +134,11 @@ struct ContentView: View {
             return .idle
         }
 
-        if note == feedback.correctAnswer {
-            return .correct
+        if feedback.isCorrect {
+            return note == feedback.correctAnswer ? .correct : .disabled
         }
 
-        if note == feedback.selectedAnswer {
-            return .incorrect
-        }
-
-        return .disabled
-    }
-}
-
-private struct PrimaryActionButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.headline)
-            .foregroundStyle(.white)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
-            .background(configuration.isPressed ? Color.accentColor.opacity(0.8) : Color.accentColor)
-            .clipShape(RoundedRectangle(cornerRadius: 18, style: .continuous))
+        return note == feedback.selectedAnswer ? .incorrect : .idle
     }
 }
 
