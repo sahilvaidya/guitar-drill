@@ -47,6 +47,7 @@ struct LifetimeStats: Codable, Equatable {
 final class StatsStore {
     private let userDefaults: UserDefaults
     private let statsKey = "lifetime_stats"
+    private let notePracticeModeKey = "note_practice_mode"
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
@@ -67,6 +68,19 @@ final class StatsStore {
         }
 
         userDefaults.set(data, forKey: statsKey)
+    }
+
+    func loadNotePracticeMode() -> NotePracticeMode {
+        guard let rawValue = userDefaults.string(forKey: notePracticeModeKey),
+              let mode = NotePracticeMode(rawValue: rawValue) else {
+            return .natural
+        }
+
+        return mode
+    }
+
+    func saveNotePracticeMode(_ mode: NotePracticeMode) {
+        userDefaults.set(mode.rawValue, forKey: notePracticeModeKey)
     }
 
     @discardableResult

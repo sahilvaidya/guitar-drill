@@ -32,4 +32,15 @@ final class FretboardTrainerUITests: XCTestCase {
         expectation(for: advancedPrompt, evaluatedWith: promptDescription)
         waitForExpectations(timeout: 4)
     }
+
+    func testPracticePageDoesNotShowChromaticSetting() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["UI_TEST_MODE", "-prompt-index", "0"]
+        app.launch()
+
+        XCTAssertTrue(app.buttons["answer_A"].exists)
+        XCTAssertFalse(app.buttons["answer_Fsharp_Gb"].exists)
+        XCTAssertFalse(app.buttons["Chromatic"].exists)
+        XCTAssertFalse(app.segmentedControls["practice_mode_picker"].exists)
+    }
 }

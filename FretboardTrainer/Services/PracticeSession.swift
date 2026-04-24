@@ -18,9 +18,7 @@ struct AnswerFeedback: Equatable {
 @MainActor
 @Observable
 final class PracticeSession {
-    let answerChoices = NoteName.allCases
-
-    private let engine: QuizEngine
+    private var engine: QuizEngine
     private let statsStore: StatsStore
     private var scriptedPromptIndex: Int?
     private var currentPromptIncorrectGuesses = 0
@@ -33,22 +31,33 @@ final class PracticeSession {
     private(set) var firstTryCorrectAnswers = 0
     private(set) var currentStreak = 0
     private(set) var lifetimeStats: LifetimeStats
+    private(set) var notePracticeMode: NotePracticeMode
 
     init(
         engine: QuizEngine = QuizEngine(),
         statsStore: StatsStore = StatsStore(),
         initialPromptIndex: Int? = nil
     ) {
-        self.engine = engine
         self.statsStore = statsStore
-        self.scriptedPromptIndex = initialPromptIndex.map { ($0 + 1) % engine.availablePositions.count }
+        let storedMode = statsStore.loadNotePracticeMode()
+        let resolvedEngine = engine.notePracticeMode == storedMode ? engine : QuizEngine(
+            fretRange: engine.fretRange,
+            notePracticeMode: storedMode
+        )
+        self.engine = resolvedEngine
+        self.notePracticeMode = storedMode
+        self.scriptedPromptIndex = initialPromptIndex.map { ($0 + 1) % resolvedEngine.availablePositions.count }
         lifetimeStats = statsStore.load()
 
         if let initialPromptIndex {
-            currentPrompt = engine.prompt(at: initialPromptIndex)
+            currentPrompt = resolvedEngine.prompt(at: initialPromptIndex)
         } else {
-            currentPrompt = engine.makeRandomPrompt()
+            currentPrompt = resolvedEngine.makeRandomPrompt()
         }
+    }
+
+    var answerChoices: [NoteName] {
+        notePracticeMode.answerChoices
     }
 
     var promptDescription: String {
@@ -86,6 +95,20 @@ final class PracticeSession {
             correctAnswer: currentPrompt.correctAnswer,
             isCorrect: isCorrect
         )
+    }
+
+    func setNotePracticeMode(_ mode: NotePracticeMode) {
+        guard mode != notePracticeMode else {
+            return
+        }
+
+        notePracticeMode = mode
+        statsStore.saveNotePracticeMode(mode)
+        engine = QuizEngine(fretRange: engine.fretRange, notePracticeMode: mode)
+        scriptedPromptIndex = scriptedPromptIndex.map { $0 % engine.availablePositions.count }
+        feedback = nil
+        currentPromptIncorrectGuesses = 0
+        currentPrompt = engine.makeRandomPrompt()
     }
 
     func nextPrompt() {

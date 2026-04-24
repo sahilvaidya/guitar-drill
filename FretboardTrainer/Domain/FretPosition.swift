@@ -18,7 +18,54 @@ struct FretPosition: Hashable, Codable, Identifiable {
         (string.openPitchClass + fret) % 12
     }
 
+    var chromaticNoteName: NoteName {
+        NoteName(pitchClass: pitchClass)!
+    }
+
+    var naturalNoteName: NoteName? {
+        let note = chromaticNoteName
+        return note.isNatural ? note : nil
+    }
+
     var noteName: NoteName? {
-        NoteName(pitchClass: pitchClass)
+        naturalNoteName
+    }
+
+    func noteName(for mode: NotePracticeMode) -> NoteName? {
+        switch mode {
+        case .natural:
+            return naturalNoteName
+        case .chromatic:
+            return chromaticNoteName
+        }
+    }
+}
+
+enum NotePracticeMode: String, CaseIterable, Codable, Identifiable {
+    case natural
+    case chromatic
+
+    var id: String { rawValue }
+
+    var label: String {
+        switch self {
+        case .natural:
+            return "Natural"
+        case .chromatic:
+            return "Chromatic"
+        }
+    }
+
+    var answerChoices: [NoteName] {
+        switch self {
+        case .natural:
+            return NoteName.naturalCases
+        case .chromatic:
+            return NoteName.chromaticCases
+        }
+    }
+
+    var includesAllFrets: Bool {
+        self == .chromatic
     }
 }

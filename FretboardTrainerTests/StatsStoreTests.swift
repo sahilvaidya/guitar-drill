@@ -47,4 +47,17 @@ final class StatsStoreTests: XCTestCase {
             )
         )
     }
+
+    func testNotePracticeModePersistsInInjectedDefaultsSuite() {
+        let suiteName = "FretboardTrainerTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = StatsStore(userDefaults: defaults)
+        XCTAssertEqual(store.loadNotePracticeMode(), .natural)
+
+        store.saveNotePracticeMode(.chromatic)
+
+        XCTAssertEqual(StatsStore(userDefaults: defaults).loadNotePracticeMode(), .chromatic)
+    }
 }

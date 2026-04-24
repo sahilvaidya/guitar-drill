@@ -4,12 +4,7 @@ import SwiftUI
 struct ContentView: View {
     @Bindable var session: PracticeSession
 
-    private let columns = [
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-        GridItem(.flexible()),
-    ]
+    private let answerColumnCount = 4
 
     var body: some View {
         ScrollView {
@@ -73,16 +68,37 @@ struct ContentView: View {
     }
 
     private var answerGrid: some View {
-        LazyVGrid(columns: columns, spacing: 12) {
-            ForEach(session.answerChoices) { note in
-                Button(note.rawValue) {
-                    session.submit(answer: note)
+        VStack(spacing: 12) {
+            ForEach(answerRows.indices, id: \.self) { rowIndex in
+                HStack(spacing: 12) {
+                    ForEach(answerRows[rowIndex]) { note in
+                        answerButton(for: note)
+                    }
+
+                    ForEach(0..<emptySlots(in: answerRows[rowIndex]), id: \.self) { _ in
+                        Spacer()
+                            .frame(maxWidth: .infinity)
+                    }
                 }
-                .buttonStyle(AnswerChoiceButtonStyle(state: buttonState(for: note)))
-                .disabled(session.feedback?.isCorrect == true)
-                .accessibilityIdentifier("answer_\(note.rawValue)")
             }
         }
+    }
+
+    private var answerRows: [[NoteName]] {
+        session.answerChoices.chunked(into: answerColumnCount)
+    }
+
+    private func emptySlots(in row: [NoteName]) -> Int {
+        answerColumnCount - row.count
+    }
+
+    private func answerButton(for note: NoteName) -> some View {
+        Button(note.rawValue) {
+            session.submit(answer: note)
+        }
+        .buttonStyle(AnswerChoiceButtonStyle(state: buttonState(for: note)))
+        .disabled(session.feedback?.isCorrect == true)
+        .accessibilityIdentifier("answer_\(note.accessibilityIDComponent)")
     }
 
     private func feedbackCard(_ feedback: AnswerFeedback) -> some View {
@@ -202,6 +218,14 @@ private struct AnswerChoiceButtonStyle: ButtonStyle {
             return Color.gray.opacity(0.25)
         case .idle:
             return Color.gray.opacity(0.2)
+        }
+    }
+}
+
+private extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        stride(from: 0, to: count, by: size).map {
+            Array(self[$0..<Swift.min($0 + size, count)])
         }
     }
 }
