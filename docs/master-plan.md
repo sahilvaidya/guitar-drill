@@ -101,6 +101,7 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, and confirm chromatic settings are not shown on the practice page.
 
 ## High-Priority Roadmap
+- Update `FretboardView` so fret `0` aligns with the board's left edge/nut instead of occupying its own fret cell; keep frets `1...12` rendered as the visible fret spaces.
 - Add a dedicated settings page that controls whether practice uses natural notes only or the chromatic scale; keep this toggle off the main practice page.
 - Add a settings section where the user can choose the active fret range within `0...12`, persist that range locally, and have prompt generation respect it.
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
