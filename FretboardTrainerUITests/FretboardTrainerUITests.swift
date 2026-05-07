@@ -43,4 +43,21 @@ final class FretboardTrainerUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Chromatic"].exists)
         XCTAssertFalse(app.segmentedControls["practice_mode_picker"].exists)
     }
+
+    func testSettingsContainsPracticeModeFretRangeAndRecentMisses() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["UI_TEST_MODE", "-prompt-index", "0"]
+        app.launch()
+
+        app.buttons["answer_F"].tap()
+        XCTAssertTrue(app.staticTexts["feedback_label"].waitForExistence(timeout: 2))
+
+        app.buttons["settings_button"].tap()
+
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 2))
+        XCTAssertTrue(app.segmentedControls["practice_mode_picker"].exists)
+        XCTAssertTrue(app.steppers["fret_range_start_stepper"].exists)
+        XCTAssertTrue(app.steppers["fret_range_end_stepper"].exists)
+        XCTAssertTrue(app.staticTexts["recent_miss_0-0"].exists)
+    }
 }

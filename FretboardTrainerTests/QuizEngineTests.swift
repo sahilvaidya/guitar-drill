@@ -25,6 +25,13 @@ final class QuizEngineTests: XCTestCase {
         XCTAssertEqual(engine.prompt(at: 2).correctAnswer, .FSharpGFlat)
     }
 
+    func testFretRangeLimitsAvailablePrompts() {
+        let engine = QuizEngine(fretRange: FretRange(start: 5, end: 7), notePracticeMode: .chromatic)
+
+        XCTAssertEqual(engine.availablePositions.count, GuitarString.allCases.count * 3)
+        XCTAssertTrue(engine.availablePositions.allSatisfy { (5...7).contains($0.fret) })
+    }
+
     func testAnswerEvaluationMatchesCorrectAnswer() {
         let engine = QuizEngine()
         let prompt = engine.prompt(at: 0)

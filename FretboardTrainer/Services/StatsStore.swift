@@ -44,10 +44,27 @@ struct LifetimeStats: Codable, Equatable {
     }
 }
 
+struct RecentMiss: Codable, Equatable, Identifiable {
+    let position: FretPosition
+    let correctAnswer: NoteName
+    let selectedAnswer: NoteName
+
+    var id: String {
+        "\(position.id)-\(selectedAnswer.rawValue)"
+    }
+
+    var label: String {
+        "\(position.string.label) string, fret \(position.fret): \(selectedAnswer.rawValue) -> \(correctAnswer.rawValue)"
+    }
+}
+
 final class StatsStore {
     private let userDefaults: UserDefaults
     private let statsKey = "lifetime_stats"
     private let notePracticeModeKey = "note_practice_mode"
+    private let fretRangeKey = "fret_range"
+    private let recentMissesKey = "recent_misses"
+    private let maxRecentMisses = 5
 
     init(userDefaults: UserDefaults = .standard) {
         self.userDefaults = userDefaults
@@ -81,6 +98,51 @@ final class StatsStore {
 
     func saveNotePracticeMode(_ mode: NotePracticeMode) {
         userDefaults.set(mode.rawValue, forKey: notePracticeModeKey)
+    }
+
+    func loadFretRange() -> FretRange {
+        guard let data = userDefaults.data(forKey: fretRangeKey),
+              let fretRange = try? JSONDecoder().decode(FretRange.self, from: data) else {
+            return .full
+        }
+
+        return fretRange
+    }
+
+    func saveFretRange(_ fretRange: FretRange) {
+        guard let data = try? JSONEncoder().encode(fretRange) else {
+            return
+        }
+
+        userDefaults.set(data, forKey: fretRangeKey)
+    }
+
+    func loadRecentMisses() -> [RecentMiss] {
+        guard let data = userDefaults.data(forKey: recentMissesKey),
+              let recentMisses = try? JSONDecoder().decode([RecentMiss].self, from: data) else {
+            return []
+        }
+
+        return recentMisses
+    }
+
+    func recordMiss(position: FretPosition, correctAnswer: NoteName, selectedAnswer: NoteName) -> [RecentMiss] {
+        let miss = RecentMiss(
+            position: position,
+            correctAnswer: correctAnswer,
+            selectedAnswer: selectedAnswer
+        )
+        let recentMisses = Array(([miss] + loadRecentMisses()).prefix(maxRecentMisses))
+        saveRecentMisses(recentMisses)
+        return recentMisses
+    }
+
+    private func saveRecentMisses(_ recentMisses: [RecentMiss]) {
+        guard let data = try? JSONEncoder().encode(recentMisses) else {
+            return
+        }
+
+        userDefaults.set(data, forKey: recentMissesKey)
     }
 
     @discardableResult

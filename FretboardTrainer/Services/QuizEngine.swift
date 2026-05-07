@@ -1,19 +1,19 @@
 import Foundation
 
 struct QuizEngine {
-    let fretRange: ClosedRange<Int>
+    let fretRange: FretRange
     let notePracticeMode: NotePracticeMode
     let availablePositions: [FretPosition]
 
     init(
-        fretRange: ClosedRange<Int> = 0...12,
+        fretRange: FretRange = .full,
         strings: [GuitarString] = GuitarString.allCases,
         notePracticeMode: NotePracticeMode = .natural
     ) {
         self.fretRange = fretRange
         self.notePracticeMode = notePracticeMode
         availablePositions = strings.flatMap { string in
-            fretRange.compactMap { fret in
+            fretRange.closedRange.compactMap { fret in
                 let position = FretPosition(string: string, fret: fret)
                 return position.noteName(for: notePracticeMode) == nil ? nil : position
             }

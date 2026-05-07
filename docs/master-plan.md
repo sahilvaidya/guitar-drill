@@ -97,13 +97,13 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - The user can retry bad answers until selecting the correct note.
 - Correct answers show brief success feedback and automatically advance without a manual `Next Note` button.
 - Session and lifetime stats distinguish attempts, solved prompts, first-try correct answers, repeated incorrect guesses, and best streak.
+- Settings provide the natural/chromatic mode toggle, a persisted active fret range within `0...12`, and a locally persisted recent-misses review list.
+- Prompt generation respects the active persisted fret range.
 - Unit tests cover note mapping, quiz evaluation, and stats persistence/backward-compatible stats decoding.
-- UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, and confirm chromatic settings are not shown on the practice page.
+- UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, settings access, and confirm chromatic settings are not shown on the practice page.
 
 ## High-Priority Roadmap
 - Update `FretboardView` so fret `0` aligns with the board's left edge/nut instead of occupying its own fret cell; keep frets `1...12` rendered as the visible fret spaces.
-- Add a dedicated settings page that controls whether practice uses natural notes only or the chromatic scale; keep this toggle off the main practice page.
-- Add a settings section where the user can choose the active fret range within `0...12`, persist that range locally, and have prompt generation respect it.
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
 
 ## Lower-Priority Roadmap
@@ -111,8 +111,4 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - Add an adaptive practice algorithm that uses recent misses and failed frets to increase the probability of seeing weak positions without fully eliminating normal random review.
 
 ## Next Agent Task
-Add a lightweight settings and review layer without widening the core scope:
-- introduce a settings screen for toggling fret subranges within `0...12`
-- move the natural/chromatic practice mode toggle into that settings screen instead of the practice page
-- add a simple “recent misses” review section backed by local persistence
-- preserve the existing drill flow and test coverage
+Update `FretboardView` so fret `0` aligns with the board's left edge/nut instead of occupying its own fret cell; keep frets `1...12` rendered as the visible fret spaces.

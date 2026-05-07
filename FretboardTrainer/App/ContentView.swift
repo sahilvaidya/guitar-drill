@@ -3,29 +3,46 @@ import SwiftUI
 
 struct ContentView: View {
     @Bindable var session: PracticeSession
+    @State private var showsSettings = false
 
     private let answerColumnCount = 4
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                header
-                promptCard
-                FretboardView(prompt: session.currentPrompt)
-                    .frame(height: 260)
-                    .padding(.vertical, 4)
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    header
+                    promptCard
+                    FretboardView(prompt: session.currentPrompt)
+                        .frame(height: 260)
+                        .padding(.vertical, 4)
 
-                if let feedback = session.feedback {
-                    feedbackCard(feedback)
+                    if let feedback = session.feedback {
+                        feedbackCard(feedback)
+                    }
+
+                    answerGrid
+
+                    lifetimeStats
                 }
-
-                answerGrid
-
-                lifetimeStats
+                .padding(20)
             }
-            .padding(20)
+            .background(Color(uiColor: .systemGroupedBackground))
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
+                        showsSettings = true
+                    } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel("Settings")
+                    .accessibilityIdentifier("settings_button")
+                }
+            }
+            .sheet(isPresented: $showsSettings) {
+                SettingsView(session: session)
+            }
         }
-        .background(Color(uiColor: .systemGroupedBackground))
         .task(id: session.feedback) {
             guard session.feedback?.isCorrect == true else {
                 return
@@ -60,6 +77,10 @@ struct ContentView: View {
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .accessibilityIdentifier("prompt_description")
+            Text(session.fretRange.label)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .accessibilityIdentifier("active_fret_range")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
@@ -155,6 +176,86 @@ struct ContentView: View {
         }
 
         return note == feedback.selectedAnswer ? .incorrect : .idle
+    }
+}
+
+private struct SettingsView: View {
+    @Bindable var session: PracticeSession
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            Form {
+                Section("Practice") {
+                    Picker("Note Set", selection: notePracticeMode) {
+                        ForEach(NotePracticeMode.allCases) { mode in
+                            Text(mode.label).tag(mode)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .accessibilityIdentifier("practice_mode_picker")
+                }
+
+                Section("Fret Range") {
+                    Stepper(
+                        "Start: \(session.fretRange.start)",
+                        value: fretStart,
+                        in: 0...session.fretRange.end
+                    )
+                    .accessibilityIdentifier("fret_range_start_stepper")
+
+                    Stepper(
+                        "End: \(session.fretRange.end)",
+                        value: fretEnd,
+                        in: session.fretRange.start...12
+                    )
+                    .accessibilityIdentifier("fret_range_end_stepper")
+                }
+
+                Section("Recent Misses") {
+                    if session.recentMisses.isEmpty {
+                        Text("No misses yet")
+                            .foregroundStyle(.secondary)
+                            .accessibilityIdentifier("recent_misses_empty")
+                    } else {
+                        ForEach(session.recentMisses) { miss in
+                            Text(miss.label)
+                                .accessibilityIdentifier("recent_miss_\(miss.position.id)")
+                        }
+                    }
+                }
+            }
+            .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Done") {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+
+    private var notePracticeMode: Binding<NotePracticeMode> {
+        Binding(
+            get: { session.notePracticeMode },
+            set: { session.setNotePracticeMode($0) }
+        )
+    }
+
+    private var fretStart: Binding<Int> {
+        Binding(
+            get: { session.fretRange.start },
+            set: { session.setFretRange(start: $0, end: session.fretRange.end) }
+        )
+    }
+
+    private var fretEnd: Binding<Int> {
+        Binding(
+            get: { session.fretRange.end },
+            set: { session.setFretRange(start: session.fretRange.start, end: $0) }
+        )
     }
 }
 

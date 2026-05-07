@@ -60,4 +60,38 @@ final class StatsStoreTests: XCTestCase {
 
         XCTAssertEqual(StatsStore(userDefaults: defaults).loadNotePracticeMode(), .chromatic)
     }
+
+    func testFretRangePersistsInInjectedDefaultsSuite() {
+        let suiteName = "FretboardTrainerTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = StatsStore(userDefaults: defaults)
+        XCTAssertEqual(store.loadFretRange(), .full)
+
+        store.saveFretRange(FretRange(start: 3, end: 7))
+
+        XCTAssertEqual(StatsStore(userDefaults: defaults).loadFretRange(), FretRange(start: 3, end: 7))
+    }
+
+    func testRecentMissesPersistMostRecentFirstWithLimit() {
+        let suiteName = "FretboardTrainerTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = StatsStore(userDefaults: defaults)
+
+        for fret in 0...6 {
+            _ = store.recordMiss(
+                position: FretPosition(string: .lowE, fret: fret),
+                correctAnswer: .E,
+                selectedAnswer: .F
+            )
+        }
+
+        let misses = StatsStore(userDefaults: defaults).loadRecentMisses()
+        XCTAssertEqual(misses.count, 5)
+        XCTAssertEqual(misses.first?.position.fret, 6)
+        XCTAssertEqual(misses.last?.position.fret, 2)
+    }
 }

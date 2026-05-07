@@ -1,5 +1,27 @@
 import Foundation
 
+struct FretRange: Codable, Equatable {
+    static let full = FretRange(start: 0, end: 12)
+
+    let start: Int
+    let end: Int
+
+    init(start: Int, end: Int) {
+        let lowerBound = min(max(start, 0), 12)
+        let upperBound = min(max(end, 0), 12)
+        self.start = min(lowerBound, upperBound)
+        self.end = max(lowerBound, upperBound)
+    }
+
+    var closedRange: ClosedRange<Int> {
+        start...end
+    }
+
+    var label: String {
+        start == end ? "Fret \(start)" : "Frets \(start)-\(end)"
+    }
+}
+
 struct FretPosition: Hashable, Codable, Identifiable {
     let string: GuitarString
     let fret: Int
