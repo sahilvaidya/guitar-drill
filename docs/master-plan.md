@@ -105,6 +105,7 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 
 ## High-Priority Roadmap
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
+- Add guitar-style fret marker dots at frets `3`, `5`, `7`, and `9` in `FretboardView` so the active question note is easier to locate by row at a glance.
 
 ## Lower-Priority Roadmap
 - Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
