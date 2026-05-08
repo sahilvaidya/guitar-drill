@@ -99,11 +99,11 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - Session and lifetime stats distinguish attempts, solved prompts, first-try correct answers, repeated incorrect guesses, and best streak.
 - Settings provide the natural/chromatic mode toggle, a persisted active fret range within `0...12`, and a locally persisted recent-misses review list.
 - Prompt generation respects the active persisted fret range.
+- Fretboard rendering places fret `0` on the nut/left edge while frets `1...12` occupy the visible fret spaces.
 - Unit tests cover note mapping, quiz evaluation, and stats persistence/backward-compatible stats decoding.
 - UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, settings access, and confirm chromatic settings are not shown on the practice page.
 
 ## High-Priority Roadmap
-- Update `FretboardView` so fret `0` aligns with the board's left edge/nut instead of occupying its own fret cell; keep frets `1...12` rendered as the visible fret spaces.
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
 
 ## Lower-Priority Roadmap
@@ -111,4 +111,4 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - Add an adaptive practice algorithm that uses recent misses and failed frets to increase the probability of seeing weak positions without fully eliminating normal random review.
 
 ## Next Agent Task
-Update `FretboardView` so fret `0` aligns with the board's left edge/nut instead of occupying its own fret cell; keep frets `1...12` rendered as the visible fret spaces.
+Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.

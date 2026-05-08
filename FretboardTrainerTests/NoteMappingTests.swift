@@ -1,3 +1,4 @@
+import CoreGraphics
 import XCTest
 @testable import FretboardTrainer
 
@@ -20,5 +21,18 @@ final class NoteMappingTests: XCTestCase {
         XCTAssertEqual(FretPosition(string: .lowE, fret: 2).chromaticNoteName, .FSharpGFlat)
         XCTAssertEqual(FretPosition(string: .a, fret: 1).chromaticNoteName, .ASharpBFlat)
         XCTAssertEqual(FretPosition(string: .b, fret: 2).chromaticNoteName, .CSharpDFlat)
+    }
+
+    func testFretboardLayoutPlacesOpenFretOnNut() {
+        let layout = FretboardLayout(size: CGSize(width: 430, height: 260), stringCount: GuitarString.allCases.count)
+
+        XCTAssertEqual(layout.xPosition(forFret: 0), layout.leftInset)
+    }
+
+    func testFretboardLayoutCentersVisibleFretsAfterNut() {
+        let layout = FretboardLayout(size: CGSize(width: 430, height: 260), stringCount: GuitarString.allCases.count)
+
+        XCTAssertEqual(layout.xPosition(forFret: 1), layout.leftInset + layout.fretSpacing / 2)
+        XCTAssertEqual(layout.xPosition(forFret: 12), layout.rightEdge - layout.fretSpacing / 2)
     }
 }
