@@ -105,10 +105,17 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 
 ## High-Priority Roadmap
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
+- Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
+- Move the existing note-finder drill behind the new home-screen entry point, including navigation back to mode selection, launch behavior that starts on the home screen, and UI smoke coverage for selecting the note-finder mode.
 
 ## Lower-Priority Roadmap
 - Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
 - Add an adaptive practice algorithm that uses recent misses and failed frets to increase the probability of seeing weak positions without fully eliminating normal random review.
+- Add a placeholder-ready mode model for future drill types so the home screen can represent unavailable modes without implementing their drill logic yet.
+- Add a chord detector mode where the app shows a chord shape or fretboard positions and asks the user to identify the chord.
+- Add a chord builder mode where the app gives a chord name and asks the user to place or choose the notes/shape that build it.
+- Add a chord progression trainer mode for practicing common progressions and recognizing functional movement between chords.
+- Add an inverse note detector mode where the app gives a note name and the user taps a matching fretboard location.
 
 ## Next Agent Task
 Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
