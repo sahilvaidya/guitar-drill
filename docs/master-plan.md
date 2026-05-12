@@ -107,6 +107,7 @@ The app is portrait-first, phone-sized, fully offline, and local-only. There is 
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
 - Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
 - Move the existing note-finder drill behind the new home-screen entry point, including navigation back to mode selection, launch behavior that starts on the home screen, and UI smoke coverage for selecting the note-finder mode.
+- Add guitar-style fret marker dots at frets `3`, `5`, `7`, and `9` in `FretboardView` so the active question note is easier to locate by row at a glance.
 
 ## Lower-Priority Roadmap
 - Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
