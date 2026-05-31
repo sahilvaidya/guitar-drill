@@ -58,12 +58,44 @@ struct RecentMiss: Codable, Equatable, Identifiable {
     }
 }
 
+struct PromptTimingStats: Codable, Equatable {
+    var recentCorrectAnswerDurations: [TimeInterval]
+
+    static let empty = PromptTimingStats(recentCorrectAnswerDurations: [])
+    static let maxRecentDurations = 5
+
+    init(recentCorrectAnswerDurations: [TimeInterval]) {
+        self.recentCorrectAnswerDurations = Array(
+            recentCorrectAnswerDurations
+                .map { max($0, 0) }
+                .prefix(Self.maxRecentDurations)
+        )
+    }
+
+    var lastCorrectAnswerDuration: TimeInterval? {
+        recentCorrectAnswerDurations.first
+    }
+
+    var averageRecentCorrectAnswerDuration: TimeInterval? {
+        guard !recentCorrectAnswerDurations.isEmpty else {
+            return nil
+        }
+
+        return recentCorrectAnswerDurations.reduce(0, +) / Double(recentCorrectAnswerDurations.count)
+    }
+
+    mutating func recordCorrectAnswerDuration(_ duration: TimeInterval) {
+        recentCorrectAnswerDurations = Array(([max(duration, 0)] + recentCorrectAnswerDurations).prefix(Self.maxRecentDurations))
+    }
+}
+
 final class StatsStore {
     private let userDefaults: UserDefaults
     private let statsKey = "lifetime_stats"
     private let notePracticeModeKey = "note_practice_mode"
     private let fretRangeKey = "fret_range"
     private let recentMissesKey = "recent_misses"
+    private let promptTimingStatsKey = "prompt_timing_stats"
     private let maxRecentMisses = 5
 
     init(userDefaults: UserDefaults = .standard) {
@@ -126,6 +158,23 @@ final class StatsStore {
         return recentMisses
     }
 
+    func loadPromptTimingStats() -> PromptTimingStats {
+        guard let data = userDefaults.data(forKey: promptTimingStatsKey),
+              let timingStats = try? JSONDecoder().decode(PromptTimingStats.self, from: data) else {
+            return .empty
+        }
+
+        return timingStats
+    }
+
+    func savePromptTimingStats(_ timingStats: PromptTimingStats) {
+        guard let data = try? JSONEncoder().encode(timingStats) else {
+            return
+        }
+
+        userDefaults.set(data, forKey: promptTimingStatsKey)
+    }
+
     func recordMiss(position: FretPosition, correctAnswer: NoteName, selectedAnswer: NoteName) -> [RecentMiss] {
         let miss = RecentMiss(
             position: position,
@@ -135,6 +184,14 @@ final class StatsStore {
         let recentMisses = Array(([miss] + loadRecentMisses()).prefix(maxRecentMisses))
         saveRecentMisses(recentMisses)
         return recentMisses
+    }
+
+    @discardableResult
+    func recordCorrectAnswerDuration(_ duration: TimeInterval) -> PromptTimingStats {
+        var timingStats = loadPromptTimingStats()
+        timingStats.recordCorrectAnswerDuration(duration)
+        savePromptTimingStats(timingStats)
+        return timingStats
     }
 
     private func saveRecentMisses(_ recentMisses: [RecentMiss]) {

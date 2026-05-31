@@ -24,6 +24,7 @@ struct ContentView: View {
                     answerGrid
 
                     lifetimeStats
+                    timingStats
                 }
                 .padding(20)
             }
@@ -128,6 +129,12 @@ struct ContentView: View {
                 .font(.headline)
             Text(feedback.message)
                 .font(.subheadline)
+            if feedback.isCorrect, let duration = session.lastCorrectAnswerDuration {
+                Text("Time: \(formattedTiming(duration))")
+                    .font(.headline)
+                    .monospacedDigit()
+                    .foregroundStyle(timingColor(for: duration))
+            }
         }
         .foregroundStyle(feedback.isCorrect ? Color.green : Color.red)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -151,6 +158,29 @@ struct ContentView: View {
         }
     }
 
+    private var timingStats: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Timing")
+                .font(.headline)
+
+            HStack(spacing: 12) {
+                timingChip(
+                    title: "Last Correct",
+                    value: session.promptTimingStats.lastCorrectAnswerDuration.map(formattedTiming) ?? "—",
+                    valueColor: timingColor(for: session.promptTimingStats.lastCorrectAnswerDuration),
+                    accessibilityIdentifier: "last_correct_time_chip"
+                )
+
+                timingChip(
+                    title: "Avg Last 5",
+                    value: session.promptTimingStats.averageRecentCorrectAnswerDuration.map(formattedTiming) ?? "—",
+                    valueColor: timingColor(for: session.promptTimingStats.averageRecentCorrectAnswerDuration),
+                    accessibilityIdentifier: "average_last_five_time_chip"
+                )
+            }
+        }
+    }
+
     private func statChip(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
@@ -164,6 +194,41 @@ struct ContentView: View {
         .padding(.horizontal, 12)
         .background(.background)
         .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func timingChip(
+        title: String,
+        value: String,
+        valueColor: Color,
+        accessibilityIdentifier: String
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            Text(title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            Text(value)
+                .font(.title3.bold())
+                .monospacedDigit()
+                .foregroundStyle(valueColor)
+                .accessibilityIdentifier(accessibilityIdentifier)
+        }
+        .padding(.vertical, 10)
+        .padding(.horizontal, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.background)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+    }
+
+    private func formattedTiming(_ duration: TimeInterval) -> String {
+        String(format: "%.1fs", duration)
+    }
+
+    private func timingColor(for duration: TimeInterval?) -> Color {
+        guard let duration else {
+            return .secondary
+        }
+
+        return duration < 5 ? .green : .red
     }
 
     private func buttonState(for note: NoteName) -> AnswerChoiceButtonStyle.State {

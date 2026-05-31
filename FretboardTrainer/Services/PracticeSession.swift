@@ -20,8 +20,10 @@ struct AnswerFeedback: Equatable {
 final class PracticeSession {
     private var engine: QuizEngine
     private let statsStore: StatsStore
+    private let now: () -> Date
     private var scriptedPromptIndex: Int?
     private var currentPromptIncorrectGuesses = 0
+    private var promptPresentedAt: Date
 
     private(set) var currentPrompt: QuizPrompt
     private(set) var feedback: AnswerFeedback?
@@ -34,19 +36,24 @@ final class PracticeSession {
     private(set) var notePracticeMode: NotePracticeMode
     private(set) var fretRange: FretRange
     private(set) var recentMisses: [RecentMiss]
+    private(set) var promptTimingStats: PromptTimingStats
+    private(set) var lastCorrectAnswerDuration: TimeInterval?
 
     init(
         engine: QuizEngine = QuizEngine(),
         statsStore: StatsStore = StatsStore(),
-        initialPromptIndex: Int? = nil
+        initialPromptIndex: Int? = nil,
+        now: @escaping () -> Date = Date.init
     ) {
         self.statsStore = statsStore
+        self.now = now
         let storedMode = statsStore.loadNotePracticeMode()
         let storedFretRange = statsStore.loadFretRange()
         let resolvedEngine = QuizEngine(fretRange: storedFretRange, notePracticeMode: storedMode)
         self.engine = resolvedEngine
         self.notePracticeMode = storedMode
         self.fretRange = storedFretRange
+        promptTimingStats = statsStore.loadPromptTimingStats()
         self.scriptedPromptIndex = initialPromptIndex.map { ($0 + 1) % resolvedEngine.availablePositions.count }
         lifetimeStats = statsStore.load()
         recentMisses = statsStore.loadRecentMisses()
@@ -56,6 +63,9 @@ final class PracticeSession {
         } else {
             currentPrompt = resolvedEngine.makeRandomPrompt()
         }
+
+        promptPresentedAt = now()
+        lastCorrectAnswerDuration = nil
     }
 
     var answerChoices: [NoteName] {
@@ -73,10 +83,14 @@ final class PracticeSession {
 
         let isCorrect = engine.evaluate(answer, for: currentPrompt)
         sessionAttempts += 1
+        let answeredAt = now()
 
         if isCorrect {
+            let duration = answeredAt.timeIntervalSince(promptPresentedAt)
             sessionSolvedPrompts += 1
             currentStreak += 1
+            lastCorrectAnswerDuration = duration
+            promptTimingStats = statsStore.recordCorrectAnswerDuration(duration)
 
             if currentPromptIncorrectGuesses == 0 {
                 firstTryCorrectAnswers += 1
@@ -85,6 +99,7 @@ final class PracticeSession {
             currentPromptIncorrectGuesses += 1
             sessionIncorrectGuesses += 1
             currentStreak = 0
+            lastCorrectAnswerDuration = nil
             recentMisses = statsStore.recordMiss(
                 position: currentPrompt.position,
                 correctAnswer: currentPrompt.correctAnswer,
@@ -128,14 +143,17 @@ final class PracticeSession {
     func nextPrompt() {
         feedback = nil
         currentPromptIncorrectGuesses = 0
+        lastCorrectAnswerDuration = nil
 
         if let scriptedPromptIndex {
             currentPrompt = engine.prompt(at: scriptedPromptIndex)
             self.scriptedPromptIndex = (scriptedPromptIndex + 1) % engine.availablePositions.count
+            promptPresentedAt = now()
             return
         }
 
         currentPrompt = engine.makeNextPrompt(excluding: currentPrompt)
+        promptPresentedAt = now()
     }
 
     private func rebuildEngine() {
@@ -144,5 +162,7 @@ final class PracticeSession {
         feedback = nil
         currentPromptIncorrectGuesses = 0
         currentPrompt = engine.makeRandomPrompt()
+        promptPresentedAt = now()
+        lastCorrectAnswerDuration = nil
     }
 }

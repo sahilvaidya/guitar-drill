@@ -54,6 +54,7 @@ Core components:
 - The user can retry bad answers until selecting the correct note.
 - Correct answers show brief success feedback and automatically advance without a manual `Next Note` button.
 - Session and lifetime stats distinguish attempts, solved prompts, first-try correct answers, repeated incorrect guesses, and best streak.
+- The app records correct-answer timing, shows the latest solve time plus a running average of the last 5 answers, and colors fast answers green and slower answers red.
 - Settings provide the natural/chromatic mode toggle, a persisted active fret range within `0...12`, and a locally persisted recent-misses review list.
 - Prompt generation respects the active persisted fret range.
 - Fretboard rendering places fret `0` on the nut/left edge while frets `1...12` occupy the visible fret spaces.
@@ -71,7 +72,6 @@ Core components:
 - UI smoke coverage protects the main practice flow and any new navigation path.
 
 ## Near-Term Roadmap
-- Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
 - Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
 - Move the existing note-finder drill behind the new home-screen entry point, including navigation back to mode selection, launch behavior that starts on the home screen, and UI smoke coverage for selecting the note-finder mode.
 
@@ -85,4 +85,4 @@ Core components:
 - Add an inverse note detector mode where the app gives a note name and the user taps a matching fretboard location.
 
 ## Next Agent Task
-Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
+Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.

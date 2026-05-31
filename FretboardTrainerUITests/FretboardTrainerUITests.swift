@@ -26,7 +26,10 @@ final class FretboardTrainerUITests: XCTestCase {
         app.buttons["answer_E"].tap()
 
         XCTAssertTrue(feedback.waitForExistence(timeout: 2))
-        XCTAssertEqual(feedback.label, "Correct, E is correct.")
+        XCTAssertTrue(feedback.label.hasPrefix("Correct, E is correct."))
+        XCTAssertTrue(feedback.label.contains("Time: "))
+        XCTAssertTrue(app.staticTexts["last_correct_time_chip"].exists)
+        XCTAssertTrue(app.staticTexts["average_last_five_time_chip"].exists)
 
         let advancedPrompt = NSPredicate(format: "label == %@", "Low E string, fret 1")
         expectation(for: advancedPrompt, evaluatedWith: promptDescription)

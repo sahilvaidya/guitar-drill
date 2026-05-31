@@ -94,4 +94,26 @@ final class StatsStoreTests: XCTestCase {
         XCTAssertEqual(misses.first?.position.fret, 6)
         XCTAssertEqual(misses.last?.position.fret, 2)
     }
+
+    func testPromptTimingStatsPersistMostRecentFiveWithAverage() {
+        let suiteName = "FretboardTrainerTests.\(UUID().uuidString)"
+        let defaults = UserDefaults(suiteName: suiteName)!
+        defaults.removePersistentDomain(forName: suiteName)
+
+        let store = StatsStore(userDefaults: defaults)
+
+        for duration in 1...6 {
+            _ = store.recordCorrectAnswerDuration(TimeInterval(duration))
+        }
+
+        XCTAssertEqual(
+            StatsStore(userDefaults: defaults).loadPromptTimingStats(),
+            PromptTimingStats(recentCorrectAnswerDurations: [6, 5, 4, 3, 2])
+        )
+
+        guard let average = StatsStore(userDefaults: defaults).loadPromptTimingStats().averageRecentCorrectAnswerDuration else {
+            return XCTFail("Expected a persisted average timing value")
+        }
+        XCTAssertEqual(average, 4.0, accuracy: 0.0001)
+    }
 }
