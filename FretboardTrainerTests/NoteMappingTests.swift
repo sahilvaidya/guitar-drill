@@ -35,4 +35,13 @@ final class NoteMappingTests: XCTestCase {
         XCTAssertEqual(layout.xPosition(forFret: 1), layout.leftInset + layout.fretSpacing / 2)
         XCTAssertEqual(layout.xPosition(forFret: 12), layout.rightEdge - layout.fretSpacing / 2)
     }
+
+    func testFretboardLayoutUsesGuitarStyleMarkerFrets() {
+        let layout = FretboardLayout(size: CGSize(width: 430, height: 260), stringCount: GuitarString.allCases.count)
+
+        XCTAssertEqual(FretboardLayout.markerFrets, [3, 5, 7, 9])
+        XCTAssertEqual(layout.xPosition(forFret: 3), layout.leftInset + 2.5 * layout.fretSpacing)
+        XCTAssertEqual(layout.xPosition(forFret: 9), layout.leftInset + 8.5 * layout.fretSpacing)
+        XCTAssertEqual(layout.markerYPosition, layout.topInset + (layout.bottomEdge - layout.topInset) / 2)
+    }
 }

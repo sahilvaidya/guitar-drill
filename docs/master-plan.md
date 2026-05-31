@@ -57,6 +57,7 @@ Core components:
 - Settings provide the natural/chromatic mode toggle, a persisted active fret range within `0...12`, and a locally persisted recent-misses review list.
 - Prompt generation respects the active persisted fret range.
 - Fretboard rendering places fret `0` on the nut/left edge while frets `1...12` occupy the visible fret spaces.
+- Fretboard rendering includes guitar-style marker dots at frets `3`, `5`, `7`, and `9`.
 - Unit tests cover note mapping, quiz evaluation, and stats persistence/backward-compatible stats decoding.
 - UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, settings access, and confirm chromatic settings are not shown on the practice page.
 
@@ -71,7 +72,6 @@ Core components:
 
 ## Near-Term Roadmap
 - Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
-- Add guitar-style fret marker dots at frets `3`, `5`, `7`, and `9` in `FretboardView` so the active question note is easier to locate by row at a glance.
 - Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
 - Move the existing note-finder drill behind the new home-screen entry point, including navigation back to mode selection, launch behavior that starts on the home screen, and UI smoke coverage for selecting the note-finder mode.
 

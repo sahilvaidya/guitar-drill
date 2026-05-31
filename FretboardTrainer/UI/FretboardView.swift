@@ -46,6 +46,17 @@ struct FretboardView: View {
                         .position(x: layout.xPosition(forFret: fret), y: 12)
                 }
 
+                ForEach(FretboardLayout.markerFrets, id: \.self) { fret in
+                    Circle()
+                        .fill(Color.secondary.opacity(0.32))
+                        .frame(width: 10, height: 10)
+                        .position(
+                            x: layout.xPosition(forFret: fret),
+                            y: layout.markerYPosition
+                        )
+                        .accessibilityHidden(true)
+                }
+
                 Circle()
                     .fill(Color.accentColor)
                     .frame(width: 24, height: 24)
@@ -64,6 +75,8 @@ struct FretboardView: View {
 }
 
 struct FretboardLayout {
+    static let markerFrets = [3, 5, 7, 9]
+
     let size: CGSize
     let stringCount: Int
 
@@ -78,6 +91,10 @@ struct FretboardLayout {
 
     var bottomEdge: CGFloat {
         size.height - bottomInset
+    }
+
+    var markerYPosition: CGFloat {
+        topInset + (bottomEdge - topInset) / 2
     }
 
     var fretSpacing: CGFloat {
