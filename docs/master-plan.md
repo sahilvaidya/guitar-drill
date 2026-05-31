@@ -79,10 +79,11 @@ Core components:
 - Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
 - Add an adaptive practice algorithm that uses recent misses and failed frets to increase the probability of seeing weak positions without fully eliminating normal random review.
 - Add a placeholder-ready mode model for future drill types so the home screen can represent unavailable modes without implementing their drill logic yet.
-- Add a chord detector mode where the app shows a chord shape or fretboard positions and asks the user to identify the chord.
-- Add a chord builder mode where the app gives a chord name and asks the user to place or choose the notes/shape that build it.
-- Add a chord progression trainer mode for practicing common progressions and recognizing functional movement between chords.
-- Add an inverse note detector mode where the app gives a note name and the user taps a matching fretboard location.
+- Add a chord practice area that is organized into a study/reference section and an exercise section so chord content can grow without mixing information and drills.
+- Start the chord practice area with triads on the highest three strings:
+  - Study/reference page: document the major and minor triad shapes and their locations on the top three strings.
+  - Exercise page: give the user a root, a major or minor quality, and an inversion, then ask them to tap the frets for the matching triad.
+- Add an inverse note detector mode after the home-screen mode selector exists, where the app gives a note name and string and the user enters the matching fret number as a low-visual exercise.
 
 ## Next Agent Task
 Add timing for each prompt so the app can measure how long it takes the user to select the correct note, including persistence for summary timing stats.
