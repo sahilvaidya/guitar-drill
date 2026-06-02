@@ -1,88 +1,82 @@
-# Fretboard Trainer Master Plan
+# Guitar Drill — Master Plan
 
 ## Product Direction
-Fretboard Trainer is a native iPhone app for memorizing guitar notes on a standard-tuned fretboard. The app already has a complete offline note-finder drill: it shows one highlighted fretboard position, asks the user to choose the note name, gives immediate feedback, and advances automatically after a correct answer.
+
+Guitar Drill is an iPhone app for memorizing guitar notes on a standard-tuned fretboard. The app has a complete offline note-finder drill: it shows a highlighted fretboard position, asks the user to choose the note name, gives immediate feedback, and advances automatically after a correct answer.
 
 Future work should build on that working loop instead of treating the app like a greenfield scaffold. Keep each change small, testable, and useful on-device.
 
 ## Current Product
-- Portrait-first native iPhone app.
-- Fully offline and local-only.
-- Standard-tuned six-string fretboard.
-- Frets `0...12`, with fret `0` rendered on the nut/left edge and frets `1...12` rendered as the visible fret spaces.
-- Natural-note practice by default, with an optional chromatic mode using combined accidental labels such as `C#/Db`.
-- Settings sheet for note set, active fret range, and recent misses.
-- Session and lifetime stats persisted locally.
-- No backend, sync, login, or network dependency.
 
-## Stack And Architecture
-- Platform: native iOS app
-- UI: `SwiftUI`
-- Language: `Swift`
-- State model: `@Observable` objects with SwiftUI bindings
-- Persistence: `UserDefaults` for local stats and settings
-- Testing: `XCTest` unit tests plus `XCUITest` drill-flow smoke coverage
+- Portrait-first iPhone app (Expo React Native, fully offline)
+- Standard-tuned six-string fretboard, frets 0–12
+- Natural-note practice by default; optional chromatic mode with combined accidentals (C#/Db)
+- Home screen for drill mode selection (Note Finder available; future modes stubbed)
+- Note Finder drill screen with fretboard visualization, answer grid, and auto-advance
+- Settings screen: mode toggle, fret range steppers, recent misses list
+- Session and lifetime stats persisted locally
+- No backend, sync, login, or network dependency
 
-Core components:
-- `NoteName`: natural and chromatic answer choices.
-- `NotePracticeMode`: natural-only or chromatic practice mode.
-- `GuitarString`: standard tuning string definitions.
-- `FretPosition`: string + fret with computed note lookup.
-- `QuizPrompt`: displayed fretboard position plus correct answer.
-- `QuizEngine`: prompt generation and answer evaluation.
-- `StatsStore`: local persistence for stats, settings, fret range, and recent misses.
-- `PracticeSession`: observable state for the active drill loop.
-- `FretboardView`: fretboard renderer and prompt-dot placement.
-- `ContentView`: current note-finder drill screen and settings entry point.
+## Stack
+
+See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Iteration Principles
-- Preserve offline-first behavior; new features should work with no network connection.
-- Prefer incremental drill improvements over broad rewrites.
-- Persist only lightweight local state unless a feature clearly needs more.
-- Keep the note-finder loop fast: answer, feedback, retry if wrong, auto-advance if correct.
-- Keep future drill modes separate enough that the existing note-finder behavior remains stable.
-- Add or update tests with each behavior change, especially around persistence, prompt generation, and navigation.
-- Update this plan whenever the next implementation target changes.
+
+- Preserve offline-first behavior
+- Prefer incremental improvements over broad rewrites
+- Keep the note-finder loop fast: answer → feedback → retry → auto-advance
+- Keep future drill modes isolated so note-finder stays stable
+- Add or update tests with each behavior change
+- Update this plan whenever the next implementation target changes
 
 ## Completed Capabilities
-- Native SwiftUI iPhone project scaffolded with offline-only app architecture.
-- Standard-tuned six-string fretboard renders frets `0...12` with one active prompt dot.
-- Natural-note-only quiz loop generates prompts and accepts `A` through `G` answers.
-- Chromatic practice mode generates prompts for all pitch classes and offers combined sharp/flat accidental answer choices.
-- Natural-note-only practice remains the default selectable mode.
-- Wrong answers show immediate incorrect feedback and keep the current prompt active.
-- The user can retry bad answers until selecting the correct note.
-- Correct answers show brief success feedback and automatically advance without a manual `Next Note` button.
-- Session and lifetime stats distinguish attempts, solved prompts, first-try correct answers, repeated incorrect guesses, and best streak.
-- The app records correct-answer timing, shows the latest solve time plus a running average of the last 5 answers, and colors fast answers green and slower answers red.
-- Settings provide the natural/chromatic mode toggle, a persisted active fret range within `0...12`, and a locally persisted recent-misses review list.
-- Prompt generation respects the active persisted fret range.
-- Fretboard rendering places fret `0` on the nut/left edge while frets `1...12` occupy the visible fret spaces.
-- Fretboard rendering includes guitar-style marker dots at frets `3`, `5`, `7`, and `9`.
-- Unit tests cover note mapping, quiz evaluation, and stats persistence/backward-compatible stats decoding.
-- UI tests cover wrong-answer retry, no manual next button, correct-answer auto-advance, settings access, and confirm chromatic settings are not shown on the practice page.
+
+- SwiftUI iPhone app (archived in `archived-swift/`)
+- Migrated to Expo SDK 56 / React Native / TypeScript
+- Standard-tuned six-string fretboard renders frets 0–12 with one active prompt dot
+- Natural-note quiz loop (A–G answers)
+- Chromatic mode with combined sharp/flat accidental answer choices
+- Wrong answers show feedback and keep the current prompt active for retry
+- Correct answers auto-advance after 1.5s delay
+- Session and lifetime stats: attempts, solved prompts, first-try correct, incorrect guesses, best streak
+- Correct-answer timing: last solve time + running average of last 5, color-coded green/red
+- Settings: mode toggle, persisted fret range, recent misses list
+- Prompt generation respects active fret range and practice mode
+- Fretboard: marker dots at frets 3, 5, 7, 9; nut rendered at left edge
+- Unit tests: note mapping, quiz engine, stats persistence (32 tests)
+- Home screen scaffold with Note Finder entry and disabled placeholders for future modes
+- Expo Router navigation: Home → Drill → Settings
+- EAS Build pipeline with TestFlight distribution
 
 ## Quality Bar
-- The app launches on iPhone with no network connection.
-- Existing note-finder behavior remains stable unless the roadmap item explicitly changes it.
-- Prompt generation respects the selected note set and active fret range.
-- Persisted stats and settings survive app relaunch.
-- UI remains usable on phone-sized portrait screens.
-- Unit tests cover core note, prompt, stats, and persistence behavior.
-- UI smoke coverage protects the main practice flow and any new navigation path.
+
+- App launches with no network connection
+- Note-finder behavior is unchanged by additions to other screens or modes
+- Prompt generation respects selected note set and active fret range
+- Persisted stats and settings survive app relaunch
+- UI is usable on phone-sized portrait screens
+- Unit tests cover domain, prompt, stats, and persistence behavior
 
 ## Near-Term Roadmap
-- Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
-- Move the existing note-finder drill behind the new home-screen entry point, including navigation back to mode selection, launch behavior that starts on the home screen, and UI smoke coverage for selecting the note-finder mode.
+
+- Fix known bugs from the initial Expo migration (tracked separately)
+- Add sharp/flat display-mode alternation: after every few chromatic questions, randomly switch between showing sharp spellings and flat spellings so the user learns both
+- Add an adaptive practice algorithm: use recent misses and weak fret positions to increase the probability of seeing difficult spots without fully removing normal random review
 
 ## Later Roadmap
-- Add a display-mode option that randomly switches between sharp spellings and flat spellings after every few questions once chromatic notes are enabled.
-- Add an adaptive practice algorithm that uses recent misses and failed frets to increase the probability of seeing weak positions without fully eliminating normal random review.
-- Add a placeholder-ready mode model for future drill types so the home screen can represent unavailable modes without implementing their drill logic yet.
-- Add a chord detector mode where the app shows a chord shape or fretboard positions and asks the user to identify the chord.
-- Add a chord builder mode where the app gives a chord name and asks the user to place or choose the notes/shape that build it.
-- Add a chord progression trainer mode for practicing common progressions and recognizing functional movement between chords.
-- Add an inverse note detector mode where the app gives a note name and the user taps a matching fretboard location.
+
+- Chord detector mode: show a chord shape on the fretboard, ask the user to identify it
+- Chord builder mode: give a chord name, ask the user to place the notes
+- Chord progression trainer: practice common progressions and functional movement
+- Inverse note detector: give a note name, user taps a matching fretboard location
 
 ## Next Agent Task
-Add an initial home screen that lets the user choose a practice mode before entering a drill. For the first version, expose only the existing note-finder drill as the available mode and keep the current note-finder screen behavior unchanged after selection.
+
+Fix known bugs from the initial Expo migration. The migration from Swift is complete and the app is building and running on device via TestFlight. The user is compiling a bug list from testing. Before implementing new features:
+
+1. Read this file and `CLAUDE.md` to understand the current state
+2. Ask the user for the current bug list
+3. Triage: distinguish visual/UX issues (fix now) from deeper logic issues (investigate first)
+4. Fix each bug with a test where the behavior is unit-testable
+5. Update the Completed Capabilities section and set the Next Agent Task to the first roadmap item once bugs are resolved
