@@ -15,7 +15,7 @@ function buttonState(note: NoteName, feedback: Feedback | null): ButtonState {
   if (!feedback) return 'idle';
   if (feedback.isCorrect) return feedback.answer === note ? 'correct' : 'disabled';
   if (feedback.answer === note) return 'incorrect';
-  return 'disabled';
+  return 'idle'; // wrong answer — other buttons stay active for retry
 }
 
 const STATE_STYLES: Record<ButtonState, { bg: string; border: string; text: string }> = {
@@ -38,7 +38,7 @@ export default function AnswerGrid({ choices, feedback, onSelect }: Props) {
           {row.map(note => {
             const state = buttonState(note, feedback);
             const colors = STATE_STYLES[state];
-            const disabled = state === 'disabled' || feedback?.isCorrect === true;
+            const disabled = state === 'disabled';
             return (
               <Pressable
                 key={note}
