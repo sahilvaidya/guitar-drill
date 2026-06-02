@@ -9,7 +9,10 @@
     "scheme": "guitardrill",
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.svaidya.guitardrill"
+      "bundleIdentifier": "com.svaidya.guitardrill",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -24,9 +27,18 @@
       "favicon": "./assets/favicon.png",
       "bundler": "metro"
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aadda197-2290-446b-9d18-0cda9a097152"
+      }
+    },
+    "owner": "svaidya"
   }
 }
