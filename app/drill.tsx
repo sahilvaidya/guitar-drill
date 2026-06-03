@@ -97,7 +97,7 @@ export default function DrillScreen() {
           {feedback && (
             <View style={[styles.card, feedback.isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect]}>
               <Text style={[styles.feedbackText, feedback.isCorrect ? styles.feedbackTextCorrect : styles.feedbackTextIncorrect]}>
-                {feedback.isCorrect ? '✓ Correct' : `✗ Incorrect — ${prompt.correctAnswer}`}
+                {feedback.isCorrect ? '✓ Correct' : '✗ Incorrect — try again'}
               </Text>
               {feedback.isCorrect && lastCorrectDuration !== null && (
                 <Text style={styles.feedbackTiming}>{lastCorrectDuration.toFixed(1)}s</Text>
