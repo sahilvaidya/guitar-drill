@@ -7,12 +7,38 @@ export type NoteName =
   | 'F' | 'F#/Gb'
   | 'G' | 'G#/Ab';
 
+export type AccidentalDisplay = 'sharp' | 'flat';
+
 export const naturalNotes: NoteName[] = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
 
 export const chromaticNotes: NoteName[] = [
   'A', 'A#/Bb', 'B', 'C', 'C#/Db', 'D',
   'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab',
 ];
+
+const chromaticSharpDisplay: string[] = [
+  'A', 'A#', 'B', 'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#',
+];
+
+const chromaticFlatDisplay: string[] = [
+  'A', 'Bb', 'B', 'C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab',
+];
+
+export function displayChromaticChoices(display: AccidentalDisplay): string[] {
+  return display === 'sharp' ? chromaticSharpDisplay : chromaticFlatDisplay;
+}
+
+const displayToCanonical: Record<string, NoteName> = {
+  'A#': 'A#/Bb', 'Bb': 'A#/Bb',
+  'C#': 'C#/Db', 'Db': 'C#/Db',
+  'D#': 'D#/Eb', 'Eb': 'D#/Eb',
+  'F#': 'F#/Gb', 'Gb': 'F#/Gb',
+  'G#': 'G#/Ab', 'Ab': 'G#/Ab',
+};
+
+export function normalizeToCanonical(display: string): NoteName {
+  return displayToCanonical[display] ?? (display as NoteName);
+}
 
 // pitch class 0 = C
 const pitchClassToNote: Record<number, NoteName> = {

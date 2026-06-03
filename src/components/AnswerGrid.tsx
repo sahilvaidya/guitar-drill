@@ -1,17 +1,16 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { NoteName } from '@/domain/noteName';
 import { Feedback } from '@/store/usePracticeSession';
 
 interface Props {
-  choices: NoteName[];
+  choices: string[];
   feedback: Feedback | null;
-  onSelect: (answer: NoteName) => void;
+  onSelect: (answer: string) => void;
 }
 
 type ButtonState = 'idle' | 'correct' | 'incorrect' | 'disabled';
 
-function buttonState(note: NoteName, feedback: Feedback | null): ButtonState {
+function buttonState(note: string, feedback: Feedback | null): ButtonState {
   if (!feedback) return 'idle';
   if (feedback.isCorrect) return feedback.answer === note ? 'correct' : 'disabled';
   if (feedback.answer === note) return 'incorrect';
@@ -26,7 +25,7 @@ const STATE_STYLES: Record<ButtonState, { bg: string; border: string; text: stri
 };
 
 export default function AnswerGrid({ choices, feedback, onSelect }: Props) {
-  const rows: NoteName[][] = [];
+  const rows: string[][] = [];
   for (let i = 0; i < choices.length; i += 4) {
     rows.push(choices.slice(i, i + 4));
   }

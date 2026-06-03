@@ -36,7 +36,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Migrated to Expo SDK 56 / React Native / TypeScript
 - Standard-tuned six-string fretboard renders frets 0–12 with one active prompt dot
 - Natural-note quiz loop (A–G answers)
-- Chromatic mode with combined sharp/flat accidental answer choices
+- Chromatic mode with sharp/flat alternation: each prompt randomly shows all-sharp (A#) or all-flat (Bb) spellings so the user learns both; `normalizeToCanonical()` maps display spellings back to canonical NoteName for evaluation and stats
 - Wrong answers show feedback and keep the current prompt active for retry
 - Correct answers auto-advance after 1.5s delay
 - Session and lifetime stats: attempts, solved prompts, first-try correct, incorrect guesses, best streak
@@ -44,7 +44,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Settings: mode toggle, persisted fret range, recent misses list
 - Prompt generation respects active fret range and practice mode
 - Fretboard: marker dots at frets 3, 5, 7, 9; nut rendered at left edge
-- Unit tests: note mapping, quiz engine, stats persistence (32 tests)
+- Unit tests: note mapping, quiz engine, stats persistence (38 tests)
 - Home screen scaffold with Note Finder entry and disabled placeholders for future modes
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
@@ -60,8 +60,6 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Near-Term Roadmap
 
-- Fix known bugs from the initial Expo migration (tracked separately)
-- Add sharp/flat display-mode alternation: after every few chromatic questions, randomly switch between showing sharp spellings and flat spellings so the user learns both
 - Add an adaptive practice algorithm: use recent misses and weak fret positions to increase the probability of seeing difficult spots without fully removing normal random review
 
 ## Later Roadmap
@@ -73,10 +71,13 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Next Agent Task
 
-Fix known bugs from the initial Expo migration. The migration from Swift is complete and the app is building and running on device via TestFlight. The user is compiling a bug list from testing. Before implementing new features:
+Add an adaptive practice algorithm for the Note Finder drill. Currently, prompts are selected uniformly at random from all positions in the active fret range. The goal is to weight selection toward positions the user gets wrong more often, without fully removing random review of other positions.
 
-1. Read this file and `CLAUDE.md` to understand the current state
-2. Ask the user for the current bug list
-3. Triage: distinguish visual/UX issues (fix now) from deeper logic issues (investigate first)
-4. Fix each bug with a test where the behavior is unit-testable
-5. Update the Completed Capabilities section and set the Next Agent Task to the first roadmap item once bugs are resolved
+Implementation guidance:
+1. Read this file and `CLAUDE.md` for full context
+2. Explore `src/services/statsStore.ts` (RecentMiss, LifetimeStats) and `src/services/quizEngine.ts` (makeRandomPrompt) — the algorithm should live in a new or extended quiz engine function
+3. Design a weighted selection: positions with recent misses or historically high error rates get higher weight; all positions retain some minimum weight so nothing is permanently skipped
+4. Add a `makeWeightedPrompt(config, recentMisses, exclude?)` function to quizEngine (or a new adaptiveEngine service), with unit tests covering: miss-heavy positions get higher weight, no-miss positions still appear, exclude still works
+5. Wire the weighted prompt into `usePracticeSession.nextPrompt()` and `initialize()` — pass `recentMisses` from store state
+6. No new persistence needed; recentMisses is already stored (last 5)
+7. Update master-plan.md and commit

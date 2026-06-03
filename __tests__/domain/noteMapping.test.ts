@@ -1,5 +1,6 @@
 import { GUITAR_STRINGS } from '../../src/domain/guitarString';
 import { chromaticNoteName, naturalNoteName } from '../../src/domain/fretPosition';
+import { normalizeToCanonical, displayChromaticChoices } from '../../src/domain/noteName';
 
 // E string open = E (pitch class 4)
 // A string open = A (pitch class 9)
@@ -51,5 +52,56 @@ describe('naturalNoteName', () => {
   test('returns note for natural', () => {
     const e = GUITAR_STRINGS[0];
     expect(naturalNoteName({ string: e, fret: 1 })).toBe('F');
+  });
+});
+
+describe('normalizeToCanonical', () => {
+  test('sharp spelling maps to canonical', () => {
+    expect(normalizeToCanonical('A#')).toBe('A#/Bb');
+    expect(normalizeToCanonical('C#')).toBe('C#/Db');
+    expect(normalizeToCanonical('D#')).toBe('D#/Eb');
+    expect(normalizeToCanonical('F#')).toBe('F#/Gb');
+    expect(normalizeToCanonical('G#')).toBe('G#/Ab');
+  });
+
+  test('flat spelling maps to canonical', () => {
+    expect(normalizeToCanonical('Bb')).toBe('A#/Bb');
+    expect(normalizeToCanonical('Db')).toBe('C#/Db');
+    expect(normalizeToCanonical('Eb')).toBe('D#/Eb');
+    expect(normalizeToCanonical('Gb')).toBe('F#/Gb');
+    expect(normalizeToCanonical('Ab')).toBe('G#/Ab');
+  });
+
+  test('natural notes pass through unchanged', () => {
+    for (const n of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+      expect(normalizeToCanonical(n)).toBe(n);
+    }
+  });
+});
+
+describe('displayChromaticChoices', () => {
+  test('sharp display has 12 notes using sharp spellings', () => {
+    const choices = displayChromaticChoices('sharp');
+    expect(choices).toHaveLength(12);
+    expect(choices).toContain('A#');
+    expect(choices).not.toContain('Bb');
+    expect(choices).not.toContain('A#/Bb');
+  });
+
+  test('flat display has 12 notes using flat spellings', () => {
+    const choices = displayChromaticChoices('flat');
+    expect(choices).toHaveLength(12);
+    expect(choices).toContain('Bb');
+    expect(choices).not.toContain('A#');
+    expect(choices).not.toContain('A#/Bb');
+  });
+
+  test('natural notes appear in both displays', () => {
+    for (const display of ['sharp', 'flat'] as const) {
+      const choices = displayChromaticChoices(display);
+      for (const n of ['A', 'B', 'C', 'D', 'E', 'F', 'G']) {
+        expect(choices).toContain(n);
+      }
+    }
   });
 });

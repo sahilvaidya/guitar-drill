@@ -1,8 +1,11 @@
 import { create } from 'zustand';
 import { QuizPrompt } from '@/domain/quizPrompt';
 import { NoteName } from '@/domain/noteName';
-import { NotePracticeMode, DEFAULT_PRACTICE_MODE, answerChoices } from '@/domain/notePracticeMode';
+import { NotePracticeMode, DEFAULT_PRACTICE_MODE } from '@/domain/notePracticeMode';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
+import {
+  AccidentalDisplay, naturalNotes, displayChromaticChoices, normalizeToCanonical,
+} from '@/domain/noteName';
 import { makeRandomPrompt, evaluate, QuizEngineConfig } from '@/services/quizEngine';
 import {
   LifetimeStats,
@@ -21,7 +24,7 @@ import {
   saveFretRange,
 } from '@/services/statsStore';
 
-export type Feedback = { answer: NoteName; isCorrect: boolean };
+export type Feedback = { answer: string; isCorrect: boolean };
 
 interface SessionStats {
   solvedPrompts: number;
@@ -35,6 +38,7 @@ interface PracticeSessionState {
   prompt: QuizPrompt | null;
   feedback: Feedback | null;
   sessionStats: SessionStats;
+  accidentalDisplay: AccidentalDisplay;
   // lifetime / persisted
   lifetimeStats: LifetimeStats;
   mode: NotePracticeMode;
@@ -50,7 +54,7 @@ interface PracticeSessionState {
 
 interface PracticeSessionActions {
   initialize: () => Promise<void>;
-  submit: (answer: NoteName) => Promise<void>;
+  submit: (answer: string) => Promise<void>;
   nextPrompt: () => void;
   setMode: (mode: NotePracticeMode) => Promise<void>;
   setFretRange: (range: FretRange) => Promise<void>;
@@ -67,11 +71,16 @@ function engineConfig(state: Pick<PracticeSessionState, 'mode' | 'fretRange'>): 
   return { mode: state.mode, fretRange: state.fretRange };
 }
 
+function randomAccidentalDisplay(): AccidentalDisplay {
+  return Math.random() < 0.5 ? 'sharp' : 'flat';
+}
+
 export const usePracticeSession = create<PracticeSessionState & PracticeSessionActions>(
   (set, get) => ({
     prompt: null,
     feedback: null,
     sessionStats: initialSessionStats,
+    accidentalDisplay: 'sharp',
     lifetimeStats: EMPTY_LIFETIME_STATS,
     mode: DEFAULT_PRACTICE_MODE,
     fretRange: DEFAULT_FRET_RANGE,
@@ -98,15 +107,17 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
         recentMisses,
         timingStats,
         prompt,
+        accidentalDisplay: randomAccidentalDisplay(),
         promptPresentedAt: Date.now(),
       });
     },
 
-    submit: async (answer: NoteName) => {
+    submit: async (answer: string) => {
       const state = get();
       if (!state.prompt || state.feedback?.isCorrect) return;
 
-      const correct = evaluate(answer, state.prompt);
+      const canonical = normalizeToCanonical(answer);
+      const correct = evaluate(canonical, state.prompt);
       const duration = state.promptPresentedAt ? (state.now() - state.promptPresentedAt) / 1000 : null;
       const isFirstTry = state.sessionStats.incorrectThisPrompt === 0;
 
@@ -137,7 +148,7 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
         const miss: RecentMiss = {
           position: { stringIndex: state.prompt.position.string.index, fret: state.prompt.position.fret },
           correct: state.prompt.correctAnswer,
-          selected: answer,
+          selected: canonical,
         };
         await recordMiss(miss);
         const misses = await loadRecentMisses();
@@ -161,6 +172,7 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
       set(s => ({
         prompt: next,
         feedback: null,
+        accidentalDisplay: randomAccidentalDisplay(),
         promptPresentedAt: s.now(),
         lastCorrectDuration: null,
         sessionStats: {
@@ -175,18 +187,21 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
       await savePracticeMode(mode);
       const config = engineConfig({ mode, fretRange: get().fretRange });
       const prompt = makeRandomPrompt(config);
-      set({ mode, prompt, feedback: null, promptPresentedAt: get().now() });
+      set({ mode, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
 
     setFretRange: async (range: FretRange) => {
       await saveFretRange(range);
       const config = engineConfig({ mode: get().mode, fretRange: range });
       const prompt = makeRandomPrompt(config);
-      set({ fretRange: range, prompt, feedback: null, promptPresentedAt: get().now() });
+      set({ fretRange: range, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
   })
 );
 
-export function useAnswerChoices(): NoteName[] {
-  return answerChoices(usePracticeSession(s => s.mode));
+export function useAnswerChoices(): string[] {
+  const mode = usePracticeSession(s => s.mode);
+  const accidentalDisplay = usePracticeSession(s => s.accidentalDisplay);
+  if (mode === 'chromatic') return displayChromaticChoices(accidentalDisplay);
+  return naturalNotes;
 }
