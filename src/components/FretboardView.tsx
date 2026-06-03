@@ -31,7 +31,8 @@ function layout(width: number, height: number) {
   }
 
   function yForString(index: number): number {
-    return TOP_INSET + index * stringSpacing;
+    // invert so highE (index 5) is at top, lowE (index 0) is at bottom
+    return TOP_INSET + (GUITAR_STRINGS.length - 1 - index) * stringSpacing;
   }
 
   return { fretSpacing, stringSpacing, rightEdge, bottomEdge, xForFret, yForString };
