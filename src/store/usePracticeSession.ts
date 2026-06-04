@@ -6,7 +6,8 @@ import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import {
   AccidentalDisplay, naturalNotes, displayChromaticChoices, normalizeToCanonical,
 } from '@/domain/noteName';
-import { makeRandomPrompt, evaluate, QuizEngineConfig } from '@/services/quizEngine';
+import { evaluate, QuizEngineConfig } from '@/services/quizEngine';
+import { makeWeightedPrompt } from '@/services/adaptiveEngine';
 import {
   LifetimeStats,
   EMPTY_LIFETIME_STATS,
@@ -99,7 +100,7 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
         loadTimingStats(),
       ]);
       const config: QuizEngineConfig = { mode, fretRange };
-      const prompt = makeRandomPrompt(config);
+      const prompt = makeWeightedPrompt(config, recentMisses);
       set({
         lifetimeStats,
         mode,
@@ -168,7 +169,7 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
     nextPrompt: () => {
       const state = get();
       const config = engineConfig(state);
-      const next = makeRandomPrompt(config, state.prompt ?? undefined);
+      const next = makeWeightedPrompt(config, state.recentMisses, state.prompt ?? undefined);
       set(s => ({
         prompt: next,
         feedback: null,
@@ -186,14 +187,14 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
     setMode: async (mode: NotePracticeMode) => {
       await savePracticeMode(mode);
       const config = engineConfig({ mode, fretRange: get().fretRange });
-      const prompt = makeRandomPrompt(config);
+      const prompt = makeWeightedPrompt(config, get().recentMisses);
       set({ mode, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
 
     setFretRange: async (range: FretRange) => {
       await saveFretRange(range);
       const config = engineConfig({ mode: get().mode, fretRange: range });
-      const prompt = makeRandomPrompt(config);
+      const prompt = makeWeightedPrompt(config, get().recentMisses);
       set({ fretRange: range, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
   })

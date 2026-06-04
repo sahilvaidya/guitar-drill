@@ -44,7 +44,8 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Settings: mode toggle, persisted fret range, recent misses list
 - Prompt generation respects active fret range and practice mode
 - Fretboard: marker dots at frets 3, 5, 7, 9; nut rendered at left edge
-- Unit tests: note mapping, quiz engine, stats persistence (38 tests)
+- Unit tests: note mapping, quiz engine, stats persistence, adaptive engine (47 tests)
+- Adaptive practice algorithm: `missCountStrategy` weights missed positions 5× higher; `WeightingStrategy` interface makes the algorithm pluggable
 - Home screen scaffold with Note Finder entry and disabled placeholders for future modes
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
@@ -59,8 +60,6 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Unit tests cover domain, prompt, stats, and persistence behavior
 
 ## Near-Term Roadmap
-
-- Add an adaptive practice algorithm: use recent misses and weak fret positions to increase the probability of seeing difficult spots without fully removing normal random review
 
 ## Later Roadmap
 
@@ -82,13 +81,15 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Next Agent Task
 
-Add an adaptive practice algorithm for the Note Finder drill. Currently, prompts are selected uniformly at random from all positions in the active fret range. The goal is to weight selection toward positions the user gets wrong more often, without fully removing random review of other positions.
+Implement the **Speed Game** mode (see Later Roadmap for full spec). This is the next major feature: a time-pressure drill where the rolling 5-prompt average response time drives a live line chart and triggers game over when it exceeds 5 seconds.
 
-Implementation guidance:
+Implementation order:
 1. Read this file and `CLAUDE.md` for full context
-2. Explore `src/services/statsStore.ts` (RecentMiss, LifetimeStats) and `src/services/quizEngine.ts` (makeRandomPrompt) — the algorithm should live in a new or extended quiz engine function
-3. Design a weighted selection: positions with recent misses or historically high error rates get higher weight; all positions retain some minimum weight so nothing is permanently skipped
-4. Add a `makeWeightedPrompt(config, recentMisses, exclude?)` function to quizEngine (or a new adaptiveEngine service), with unit tests covering: miss-heavy positions get higher weight, no-miss positions still appear, exclude still works
-5. Wire the weighted prompt into `usePracticeSession.nextPrompt()` and `initialize()` — pass `recentMisses` from store state
-6. No new persistence needed; recentMisses is already stored (last 5)
-7. Update master-plan.md and commit
+2. Create `src/domain/speedGameDistractors.ts` — distractor picking logic (2 wrong notes distinct from the correct answer; support both natural and chromatic modes)
+3. Create `src/store/useSpeedGame.ts` — rolling average (window of 5), game state (active/gameover), score, penalty mechanic (+6s on wrong tap)
+4. Add `speedGameBestScore` to `statsStore.ts` — persisted via AsyncStorage
+5. Create `app/note-identification.tsx` — submenu screen with "Training" and "Speed Game" entries
+6. Update `app/index.tsx` — "Note Finder" card now navigates to the note-identification submenu
+7. Create `app/speed-game.tsx` — drill screen: fretboard, 3 answer buttons, live stock chart (react-native-svg), game-over overlay
+8. Tests: distractor generation (always 2 distinct wrong notes, both modes), rolling average (window of 5, <5 samples), game-over trigger logic
+9. Update master-plan.md and commit

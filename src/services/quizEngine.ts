@@ -10,7 +10,7 @@ export interface QuizEngineConfig {
   fretRange: FretRange;
 }
 
-function buildPositions(config: QuizEngineConfig): FretPosition[] {
+export function buildPositions(config: QuizEngineConfig): FretPosition[] {
   const frets = fretRangeToArray(config.fretRange);
   const positions: FretPosition[] = [];
   for (const string of GUITAR_STRINGS) {
