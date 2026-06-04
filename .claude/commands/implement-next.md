@@ -6,7 +6,7 @@ Implement the current `## Next Agent Task` from `docs/master-plan.md` following 
 
 1. **Read context** — read `docs/master-plan.md` and `CLAUDE.md` in full before doing anything else
 
-2. **Confirm the task** — summarize the Next Agent Task back to the user in 2–3 sentences. If anything is ambiguous or missing, ask before proceeding. Do not assume.
+2. **Confirm the task** — summarize the Next Agent Task back to the user in 2–3 sentences. If anything is ambiguous or missing, ask for clarification. **Wait for the user to explicitly confirm before proceeding to any implementation steps.** Do not assume approval.
 
 3. **Explore before planning** — read the relevant source files to understand existing patterns:
    - Check `src/domain/` for any domain types that need extending
