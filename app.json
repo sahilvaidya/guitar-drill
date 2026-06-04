@@ -39,6 +39,12 @@
         "projectId": "aadda197-2290-446b-9d18-0cda9a097152"
       }
     },
-    "owner": "svaidya"
+    "owner": "svaidya",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/aadda197-2290-446b-9d18-0cda9a097152"
+    }
   }
 }
