@@ -44,11 +44,14 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Settings: mode toggle, persisted fret range, recent misses list
 - Prompt generation respects active fret range and practice mode
 - Fretboard: marker dots at frets 3, 5, 7, 9; nut rendered at left edge
-- Unit tests: note mapping, quiz engine, stats persistence, adaptive engine (47 tests)
+- Unit tests: note mapping, quiz engine, stats persistence, adaptive engine, triad domain (56 tests)
 - Adaptive practice algorithm: `missCountStrategy` weights missed positions 5× higher; `WeightingStrategy` interface makes the algorithm pluggable
 - Home screen scaffold with Note Finder entry and disabled placeholders for future modes
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
+- **Bottom tab navigation**: Practice tab (existing drills) + Study tab (new reference section)
+- **Study section framework**: Study home with topic cards (Triads available; Scales, Intervals, CAGED coming soon); Triads screen with Reference / Practice segmented layout
+- **Triad domain** (`src/domain/triad.ts`): `TriadQuality` type, interval tables, formula/description/color lookup maps, `triadNotes()` pure function; all four qualities (major/minor/diminished/augmented) covered
 
 ## Quality Bar
 
@@ -81,15 +84,23 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Next Agent Task
 
-Implement the **Speed Game** mode (see Later Roadmap for full spec). This is the next major feature: a time-pressure drill where the rolling 5-prompt average response time drives a live line chart and triggers game over when it exceeds 5 seconds.
+Flesh out the **Triads reference screen** with real fretboard shape content and root-note browsing.
+
+Context: `app/(tabs)/study/triads.tsx` already has the Reference/Practice segmented layout and 4 triad quality cards (major/minor/diminished/augmented). Each card has a "Fretboard shapes — coming soon" placeholder. The domain logic lives in `src/domain/triad.ts`.
 
 Implementation order:
-1. Read this file and `CLAUDE.md` for full context
-2. Create `src/domain/speedGameDistractors.ts` — distractor picking logic (2 wrong notes distinct from the correct answer; support both natural and chromatic modes)
-3. Create `src/store/useSpeedGame.ts` — rolling average (window of 5), game state (active/gameover), score, penalty mechanic (+6s on wrong tap)
-4. Add `speedGameBestScore` to `statsStore.ts` — persisted via AsyncStorage
-5. Create `app/note-identification.tsx` — submenu screen with "Training" and "Speed Game" entries
-6. Update `app/index.tsx` — "Note Finder" card now navigates to the note-identification submenu
-7. Create `app/speed-game.tsx` — drill screen: fretboard, 3 answer buttons, live stock chart (react-native-svg), game-over overlay
-8. Tests: distractor generation (always 2 distinct wrong notes, both modes), rolling average (window of 5, <5 samples), game-over trigger logic
-9. Update master-plan.md and commit
+1. Read this file and `CLAUDE.md`; review `app/(tabs)/study/triads.tsx` and `src/domain/triad.ts`
+2. **Root-note picker** — add a horizontally-scrollable row of root-note buttons (A–G natural notes; optionally chromatic) above the quality cards so the user can browse shapes for any root
+3. **Fretboard shape data** — add to `src/domain/triad.ts` (or a new `src/domain/triadShapes.ts`): the standard closed-position shapes for major and minor triads across the 6 strings (at minimum the three string-set groupings: strings 1–3, 2–4, 3–5). Data structure: `{ stringSet, baseFret, fingerPositions[] }`.
+4. **Shape diagrams** — create `src/components/TriadDiagramView.tsx` using react-native-svg: a small 4-fret × 3-string chord diagram with finger dots, nut indicator, and muted-string markers. Reuse the existing SVG patterns from `FretboardView.tsx`.
+5. Replace the "coming soon" placeholder in each `TriadCard` with a horizontal scroll of `TriadDiagramView` instances for the selected root note.
+6. Diminished and augmented shapes can remain as "coming soon" placeholders in this pass (they are less common and need more shapes).
+7. Add unit tests for any shape-selection or transposition logic.
+8. Update master-plan.md and commit.
+
+Acceptance criteria:
+- Tapping a root note (e.g. "G") updates all four quality cards to show shapes for that root
+- Major and minor cards show at least 2 fretboard diagrams each
+- Diagrams are correct (finger positions match the triad notes for the selected root)
+- Diminished/augmented cards retain the "coming soon" placeholder for now
+- All existing tests still pass

@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Stack } from 'expo-router';
 
 interface DrillCardProps {
   title: string;
@@ -24,33 +23,30 @@ function DrillCard({ title, description, onPress, available = true }: DrillCardP
   );
 }
 
-export default function HomeScreen() {
+export default function PracticeTab() {
   const router = useRouter();
 
   return (
-    <>
-      <Stack.Screen options={{ title: 'Guitar Drill', headerLargeTitle: true }} />
-      <SafeAreaView style={styles.container}>
-        <View style={styles.content}>
-          <Text style={styles.sectionHeader}>Drills</Text>
-          <DrillCard
-            title="Note Finder"
-            description="Identify the note at a highlighted fret position."
-            onPress={() => router.push('/drill')}
-          />
-          <DrillCard
-            title="Chord Detector"
-            description="Identify a chord from its fretboard shape."
-            available={false}
-          />
-          <DrillCard
-            title="Inverse Note"
-            description="Tap the correct fret for a given note name."
-            available={false}
-          />
-        </View>
-      </SafeAreaView>
-    </>
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        <Text style={styles.sectionHeader}>Drills</Text>
+        <DrillCard
+          title="Note Finder"
+          description="Identify the note at a highlighted fret position."
+          onPress={() => router.push('/drill')}
+        />
+        <DrillCard
+          title="Chord Detector"
+          description="Identify a chord from its fretboard shape."
+          available={false}
+        />
+        <DrillCard
+          title="Inverse Note"
+          description="Tap the correct fret for a given note name."
+          available={false}
+        />
+      </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,6 +1,6 @@
 import { Stack } from 'expo-router';
 
-export default function RootLayout() {
+export default function StudyLayout() {
   return (
     <Stack
       screenOptions={{
@@ -9,8 +9,14 @@ export default function RootLayout() {
         contentStyle: { backgroundColor: '#F2F2F7' },
       }}
     >
-      {/* Tabs group: header managed inside by each tab's own navigator */}
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen
+        name="index"
+        options={{ title: 'Study', headerLargeTitle: true }}
+      />
+      <Stack.Screen
+        name="triads"
+        options={{ title: 'Triads' }}
+      />
     </Stack>
   );
 }
