@@ -49,7 +49,11 @@ export default function StudyHomeScreen() {
   const router = useRouter();
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      contentInsetAdjustmentBehavior="automatic"
+    >
       <Text style={styles.sectionHeader}>Chords</Text>
       <StudyTopicCard
         title="Triads"
