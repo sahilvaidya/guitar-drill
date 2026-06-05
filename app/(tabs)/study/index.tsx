@@ -54,7 +54,7 @@ export default function StudyHomeScreen() {
       <StudyTopicCard
         title="Triads"
         description="Major, minor, diminished, and augmented triad theory and shapes."
-        icon="musical-note"
+        icon="musical-notes"
         onPress={() => router.push('/study/triads')}
       />
 
