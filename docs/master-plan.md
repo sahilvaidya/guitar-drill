@@ -52,6 +52,9 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - **Bottom tab navigation**: Practice tab (existing drills) + Study tab (new reference section)
 - **Study section framework**: Study home with topic cards (Triads available; Scales, Intervals, CAGED coming soon); Triads screen with Reference / Practice segmented layout
 - **Triad domain** (`src/domain/triad.ts`): `TriadQuality` type, interval tables, formula/description/color lookup maps, `triadNotes()` pure function; all four qualities (major/minor/diminished/augmented) covered
+- **Triad shapes** (`src/domain/triadShapes.ts`): all 3 closed-position voicings (root pos / 1st inv / 2nd inv) for all 4 qualities on strings G·B·e; `NoteRole` type with display labels; full musical verification via 96 unit tests (interval relationships + spot-checks for C major/minor/dim/aug)
+- **TriadDiagramView** (`src/components/TriadDiagramView.tsx`): SVG chord diagram showing 3 strings × 4 fret spaces with role-labelled dots (R solid, others tinted); quality-color-coded; inversion label below
+- Triads reference screen: "coming soon" placeholder replaced with horizontally-scrollable row of 3 `TriadDiagramView` instances per quality card; all 4 qualities fully diagrammed
 
 ## Quality Bar
 
@@ -84,23 +87,25 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Next Agent Task
 
-Flesh out the **Triads reference screen** with real fretboard shape content and root-note browsing.
+Add a **root-note picker** to the Triads reference screen so shapes can be browsed in any key.
 
-Context: `app/(tabs)/study/triads.tsx` already has the Reference/Practice segmented layout and 4 triad quality cards (major/minor/diminished/augmented). Each card has a "Fretboard shapes — coming soon" placeholder. The domain logic lives in `src/domain/triad.ts`.
+Context:
+- `app/(tabs)/study/triads.tsx` — the Triads screen; each quality card has a horizontally-scrollable row of 3 `TriadDiagramView` instances showing generic moveable shapes (G·B·e strings)
+- `src/domain/triadShapes.ts` — `TRIAD_SHAPES` with `offsets` + `roles` per shape; no key-specific logic yet
+- `src/domain/triad.ts` — `triadNotes(rootPitchClass, quality)` returns the 3 note names; `chromaticNotes` lists all 12 pitch classes
 
 Implementation order:
-1. Read this file and `CLAUDE.md`; review `app/(tabs)/study/triads.tsx` and `src/domain/triad.ts`
-2. **Root-note picker** — add a horizontally-scrollable row of root-note buttons (A–G natural notes; optionally chromatic) above the quality cards so the user can browse shapes for any root
-3. **Fretboard shape data** — add to `src/domain/triad.ts` (or a new `src/domain/triadShapes.ts`): the standard closed-position shapes for major and minor triads across the 6 strings (at minimum the three string-set groupings: strings 1–3, 2–4, 3–5). Data structure: `{ stringSet, baseFret, fingerPositions[] }`.
-4. **Shape diagrams** — create `src/components/TriadDiagramView.tsx` using react-native-svg: a small 4-fret × 3-string chord diagram with finger dots, nut indicator, and muted-string markers. Reuse the existing SVG patterns from `FretboardView.tsx`.
-5. Replace the "coming soon" placeholder in each `TriadCard` with a horizontal scroll of `TriadDiagramView` instances for the selected root note.
-6. Diminished and augmented shapes can remain as "coming soon" placeholders in this pass (they are less common and need more shapes).
-7. Add unit tests for any shape-selection or transposition logic.
-8. Update master-plan.md and commit.
+1. Read this file and `CLAUDE.md`; review the files above
+2. **Root-note picker** — add to `triadShapes.ts` (or `triad.ts`): a helper `baseFretForShape(shape, rootPitchClass)` that, given a moveable shape and a root pitch class, returns the base fret where the root string lands on the neck (so the diagram can show the actual fret number)
+3. **Update `TriadDiagramView`** — add an optional `baseFret?: number` prop; when provided, show a small fret-number label to the left of the diagram (e.g. "5fr") so the player knows where to position their hand; omit label when `baseFret` is 0 (open position)
+4. **Root-note picker UI** — add a horizontally-scrollable row of 12 root buttons (A–G + accidentals, using natural names by default) at the top of the Reference section, above the quality cards; selected root stored in component state (default: C)
+5. **Wire up** — pass the selected root pitch class into each `TriadCard`; compute `baseFret` for each shape via the helper; pass it to `TriadDiagramView`; also update the "Example (C):" note pills row to reflect the selected root
+6. Add unit tests for `baseFretForShape` (verify fret numbers for a handful of root/shape combinations match known guitar positions)
+7. Update master-plan.md and commit
 
 Acceptance criteria:
-- Tapping a root note (e.g. "G") updates all four quality cards to show shapes for that root
-- Major and minor cards show at least 2 fretboard diagrams each
-- Diagrams are correct (finger positions match the triad notes for the selected root)
-- Diminished/augmented cards retain the "coming soon" placeholder for now
-- All existing tests still pass
+- Tapping "G" shows all shape diagrams shifted to the G position with correct fret numbers
+- "Example (C):" label updates to reflect the selected root (e.g. "Example (G):")
+- Note pills show the correct notes for the selected root
+- Open-position shapes (base fret = 0) omit the fret label
+- All existing 152 tests still pass

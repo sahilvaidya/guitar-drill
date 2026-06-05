@@ -15,19 +15,22 @@ import {
   triadNotes,
   TriadQuality,
 } from '@/domain/triad';
+import { TRIAD_SHAPES } from '@/domain/triadShapes';
+import TriadDiagramView from '@/components/TriadDiagramView';
 
-// C is pitch class 0 — used for the example notes on each card
-const EXAMPLE_ROOT_PITCH_CLASS = 0;
+// C (pitch class 0) is used for the example notes row
+const EXAMPLE_ROOT = 0;
 
 type Section = 'reference' | 'practice';
 
 function TriadCard({ quality }: { quality: TriadQuality }) {
   const color = TRIAD_COLOR[quality];
-  const notes = triadNotes(EXAMPLE_ROOT_PITCH_CLASS, quality);
+  const notes = triadNotes(EXAMPLE_ROOT, quality);
+  const shapes = TRIAD_SHAPES[quality];
 
   return (
     <View style={styles.triadCard}>
-      {/* Quality label badge */}
+      {/* Quality badge */}
       <View style={[styles.qualityBadge, { backgroundColor: color + '1A' }]}>
         <Text style={[styles.qualityLabel, { color }]}>{TRIAD_LABEL[quality]}</Text>
       </View>
@@ -50,11 +53,18 @@ function TriadCard({ quality }: { quality: TriadQuality }) {
         </View>
       </View>
 
-      {/* Fretboard shapes placeholder */}
-      <View style={styles.shapesDivider} />
-      <View style={styles.shapesPlaceholder}>
-        <Text style={styles.shapesPlaceholderText}>Fretboard shapes — coming soon</Text>
-      </View>
+      {/* Shape diagrams */}
+      <View style={[styles.shapesDivider, { backgroundColor: color + '30' }]} />
+      <Text style={[styles.shapesHeader, { color }]}>Strings G · B · e</Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.diagramsRow}
+      >
+        {shapes.map((shape, i) => (
+          <TriadDiagramView key={i} shape={shape} color={color} />
+        ))}
+      </ScrollView>
     </View>
   );
 }
@@ -95,7 +105,7 @@ export default function TriadsScreen() {
             Interactive drills for triads are coming soon.{'\n'}
             You'll be able to drill triad spelling, shape recognition, and fretboard placement.
           </Text>
-          {/* TODO: drill modes will go here — triad spelling, shape recognition, fretboard placement */}
+          {/* TODO: drill modes — triad spelling, shape recognition, fretboard placement */}
         </View>
       )}
     </View>
@@ -106,10 +116,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
 
   // Segmented control
-  segmentedWrapper: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-  },
+  segmentedWrapper: { paddingHorizontal: 16, paddingVertical: 12 },
   segmented: {
     flexDirection: 'row',
     backgroundColor: '#E5E5EA',
@@ -118,19 +125,13 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   segment: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 8,
-    alignItems: 'center',
-    backgroundColor: 'transparent',
+    flex: 1, paddingVertical: 7, borderRadius: 8,
+    alignItems: 'center', backgroundColor: 'transparent',
   },
   segmentActive: {
     backgroundColor: '#fff',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.10,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10, shadowRadius: 2, elevation: 2,
   },
   segmentText: { fontSize: 14, fontWeight: '500', color: '#1C1C1E' },
   segmentTextActive: { fontWeight: '600', color: '#1C1C1E' },
@@ -141,19 +142,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
     gap: 8,
   },
-  qualityBadge: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-  },
+  qualityBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
   qualityLabel: { fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
   formula: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', letterSpacing: 0.5 },
   description: { fontSize: 14, color: '#8E8E93', lineHeight: 20 },
@@ -163,18 +156,22 @@ const styles = StyleSheet.create({
   notePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 },
   notePillText: { fontSize: 13, fontWeight: '600' },
 
-  // Shapes placeholder
-  shapesDivider: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E5EA' },
-  shapesPlaceholder: { paddingVertical: 10, alignItems: 'center' },
-  shapesPlaceholderText: { fontSize: 12, color: '#C7C7CC', fontStyle: 'italic' },
+  // Shapes section
+  shapesDivider: { height: 1, marginHorizontal: -16 },
+  shapesHeader: {
+    fontSize: 11, fontWeight: '700', letterSpacing: 0.5,
+    textTransform: 'uppercase', marginTop: 2,
+  },
+  diagramsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingVertical: 4,
+    paddingRight: 4,
+  },
 
   // Practice shell
   practiceShell: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
-    gap: 12,
+    flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12,
   },
   practiceTitle: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', textAlign: 'center' },
   practiceSubtitle: { fontSize: 15, color: '#8E8E93', textAlign: 'center', lineHeight: 22 },
