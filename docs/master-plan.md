@@ -67,7 +67,39 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Near-Term Roadmap
 
+### Goal 3 — Add new info in one place
+
+- **Bookmarking / favorites** — a star button on any reference diagram (triad shape, chord voicing, scale pattern) that saves it to a "My Saved Shapes" list. The list lives in AsyncStorage and is accessible from a dedicated tab or section for quick review. Simpler entry point before a full library.
+
+- **Personal Library ("My Library")** — a section where the user can save chord shapes, scale patterns, fingering notes, and free-text observations. Each entry has a type (chord / scale / note), a label the user sets, and an optional diagram snapshot. "Save to My Library" button appears on any generated diagram. Persisted in AsyncStorage. Acts as the single place to capture things learned outside the app (from lessons, YouTube, etc.).
+
+### Goal 2 — Learn fretboard and chords better
+
+- **Open & barre chord reference** — a "Chords" topic card in the Study section. Browse by root note → chord quality → voicing. Covers at minimum: open position (G, C, D, A, E, Am, Em, Dm) and moveable barre forms (E-shape and A-shape). Uses the same `TriadDiagramView` chord diagram component, extended to show 6 strings and standard fingering numbers.
+
+- **Scales module** — a "Scales" topic card in the Study section with two sub-sections:
+  - *Reference*: select a root note + mode (major, natural minor, pentatonic major/minor, blues); the full fretboard SVG highlights all notes of that scale with the root in a distinct color.
+  - *Drill*: a position is highlighted; the user names the scale degree (1–7) or identifies whether it's in the selected scale. Respects active fret range.
+
+- **CAGED system reference** — a "CAGED" topic card in the Study section. A guided reference walking through each of the five chord shapes (C, A, G, E, D) as they appear up the neck, showing how they connect into a continuous map. Each shape screen shows the fretboard with the chord tones colored and the scale tones of the same key faded in. Read-only reference for now.
+
+- **Interval recognition drill** — a new drill mode (Practice tab). Two fret positions are highlighted; the user names the interval (e.g. P5, M3, m7). Alternatively: given a root position, tap the fret that is a specified interval away. Covers all diatonic intervals; chromatic optional. New domain file `src/domain/interval.ts`; new drill screen `app/intervals.tsx`.
+
+### Goal 1 — Practice / remember what you know
+
+- **Triad practice drill** — fill in the stubbed Practice tab on the Triads screen. Show a triad quality and root; the user selects the correct set of notes from an answer grid (or taps positions on the fretboard). Uses `triadNotes()` from `src/domain/triad.ts`. Adaptive weighting applies the same way as the Note Finder.
+
+- **Inverse note finder** — give the user a note name (e.g. "F#"), and they tap a matching fretboard position. Multiple correct answers are valid (all positions of that note within the active fret range). Immediate feedback highlights all valid positions on the fretboard after the answer. New drill screen `app/inverse-drill.tsx`.
+
+- **Spaced repetition / review sessions** — a "Review" entry point (on the Home or Practice tab) that surfaces items due today based on a lightweight SRS schedule (e.g. SM-2 variant). Each item is a fret position, chord shape, or scale pattern. Review history stored in AsyncStorage alongside existing stats. Complements the existing adaptive engine (which weights by miss frequency) with a time-based forgetting curve.
+
 ## Later Roadmap
+
+### Bonus
+
+- **Scale degree drills** — given a highlighted scale pattern on the fretboard, the user identifies the scale degree of a highlighted note (e.g. "what degree is this in G major?"). Bridges music theory vocabulary to physical fretboard positions.
+
+- **Chord progression trainer** — show a progression (e.g. ii–V–I in G) and let the user practice finding the chord voicings up the neck in sequence. Teaches functional harmony and common movement patterns.
 
 - **Speed Game** (Note Identification game mode) — a time-pressure drill where the player must keep a rolling average response time below a threshold or face game over, visualized as a live stock chart.
   - **Navigation**: Home screen "Note Finder" card becomes a "Note Identification" submenu with two entries — **Training** (current drill, unchanged) and **Speed Game** (new).
@@ -82,8 +114,6 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 - Chord detector mode: show a chord shape on the fretboard, ask the user to identify it
 - Chord builder mode: give a chord name, ask the user to place the notes
-- Chord progression trainer: practice common progressions and functional movement
-- Inverse note detector: give a note name, user taps a matching fretboard location
 
 ## Next Agent Task
 
