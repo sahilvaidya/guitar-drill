@@ -55,6 +55,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - **Triad shapes** (`src/domain/triadShapes.ts`): all 3 closed-position voicings (root pos / 1st inv / 2nd inv) for all 4 qualities on strings G·B·e; `NoteRole` type with display labels; full musical verification via 96 unit tests (interval relationships + spot-checks for C major/minor/dim/aug)
 - **TriadDiagramView** (`src/components/TriadDiagramView.tsx`): SVG chord diagram showing 3 strings × 4 fret spaces with role-labelled dots (R solid, others tinted); quality-color-coded; inversion label below
 - Triads reference screen: "coming soon" placeholder replaced with horizontally-scrollable row of 3 `TriadDiagramView` instances per quality card; all 4 qualities fully diagrammed
+- **Inverse Note Finder drill** (`app/inverse-drill.tsx`): note name shown as prompt; user taps a matching fret position; correct tap reveals all valid positions in green with 1.5s auto-advance; wrong tap flashes red and retries; chromatic mode alternates sharp/flat prompt spellings; separate stats (attempts, solved prompts, best streak) persisted in AsyncStorage; adaptive weighting boosts notes the user has missed; `FretboardView` extended with optional `onPositionTap` and `highlightedPositions` props; `getAllPositionsForNote` domain helper added to `fretPosition.ts`; `generateInversePrompt` service function in `quizEngine.ts`; 15 new unit tests
 
 ## Quality Bar
 
@@ -89,7 +90,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 - **Triad practice drill** — fill in the stubbed Practice tab on the Triads screen. Show a triad quality and root; the user selects the correct set of notes from an answer grid (or taps positions on the fretboard). Uses `triadNotes()` from `src/domain/triad.ts`. Adaptive weighting applies the same way as the Note Finder.
 
-- **Inverse note finder** — give the user a note name (e.g. "F#"), and they tap a matching fretboard position. Multiple correct answers are valid (all positions of that note within the active fret range). Immediate feedback highlights all valid positions on the fretboard after the answer. New drill screen `app/inverse-drill.tsx`.
+- ~~**Inverse note finder**~~ — **Completed.** See Completed Capabilities above.
 
 - **Spaced repetition / review sessions** — a "Review" entry point (on the Home or Practice tab) that surfaces items due today based on a lightweight SRS schedule (e.g. SM-2 variant). Each item is a fret position, chord shape, or scale pattern. Review history stored in AsyncStorage alongside existing stats. Complements the existing adaptive engine (which weights by miss frequency) with a time-based forgetting curve.
 
@@ -138,4 +139,4 @@ Acceptance criteria:
 - "Example (C):" label updates to reflect the selected root (e.g. "Example (G):")
 - Note pills show the correct notes for the selected root
 - Open-position shapes (base fret = 0) omit the fret label
-- All existing 152 tests still pass
+- All existing tests still pass

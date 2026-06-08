@@ -10,6 +10,8 @@ const KEYS = {
   fretRange: 'fretRange',
   recentMisses: 'recentMisses',
   timingStats: 'timingStats',
+  inverseLifetimeStats: 'inverseLifetimeStats',
+  inverseMissedNotes: 'inverseMissedNotes',
 } as const;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -37,6 +39,18 @@ export interface RecentMiss {
   correct: NoteName;
   selected: NoteName;
 }
+
+export interface InverseLifetimeStats {
+  totalAttempts: number;
+  solvedPrompts: number;
+  bestStreak: number;
+}
+
+export const EMPTY_INVERSE_LIFETIME_STATS: InverseLifetimeStats = {
+  totalAttempts: 0,
+  solvedPrompts: 0,
+  bestStreak: 0,
+};
 
 export interface PromptTimingStats {
   recentDurations: number[];
@@ -158,4 +172,51 @@ export async function recordCorrectAnswerDuration(duration: number): Promise<voi
   const { recentDurations } = await loadTimingStats();
   const updated = [duration, ...recentDurations].slice(0, 5);
   await AsyncStorage.setItem(KEYS.timingStats, JSON.stringify(updated));
+}
+
+// ── Inverse Note Finder stats ──────────────────────────────────────────────
+
+export async function loadInverseLifetimeStats(): Promise<InverseLifetimeStats> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.inverseLifetimeStats);
+    if (!raw) return EMPTY_INVERSE_LIFETIME_STATS;
+    const r = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      totalAttempts: typeof r.totalAttempts === 'number' ? r.totalAttempts : 0,
+      solvedPrompts: typeof r.solvedPrompts === 'number' ? r.solvedPrompts : 0,
+      bestStreak:    typeof r.bestStreak === 'number' ? r.bestStreak : 0,
+    };
+  } catch {
+    return EMPTY_INVERSE_LIFETIME_STATS;
+  }
+}
+
+export async function recordInverseAttempt(params: {
+  solved: boolean;
+  currentStreak: number;
+}): Promise<void> {
+  const stats = await loadInverseLifetimeStats();
+  const updated: InverseLifetimeStats = {
+    totalAttempts: stats.totalAttempts + 1,
+    solvedPrompts: params.solved ? stats.solvedPrompts + 1 : stats.solvedPrompts,
+    bestStreak:    Math.max(stats.bestStreak, params.currentStreak),
+  };
+  await AsyncStorage.setItem(KEYS.inverseLifetimeStats, JSON.stringify(updated));
+}
+
+export async function loadInverseMissedNotes(): Promise<NoteName[]> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.inverseMissedNotes);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export async function recordInverseMiss(note: NoteName): Promise<void> {
+  const notes = await loadInverseMissedNotes();
+  const updated = [note, ...notes].slice(0, 10);
+  await AsyncStorage.setItem(KEYS.inverseMissedNotes, JSON.stringify(updated));
 }

@@ -41,9 +41,9 @@ export default function PracticeTab() {
           available={false}
         />
         <DrillCard
-          title="Inverse Note"
-          description="Tap the correct fret for a given note name."
-          available={false}
+          title="Inverse Note Finder"
+          description="Tap the correct fret position for a given note name."
+          onPress={() => router.push('/inverse-drill')}
         />
       </View>
     </SafeAreaView>

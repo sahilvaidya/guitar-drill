@@ -2,12 +2,20 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import Svg, { Line, Circle, Text as SvgText, Rect } from 'react-native-svg';
 import { QuizPrompt } from '@/domain/quizPrompt';
+import { FretPosition } from '@/domain/fretPosition';
 import { GUITAR_STRINGS } from '@/domain/guitarString';
 
+interface HighlightedPosition {
+  pos: FretPosition;
+  color: string;
+}
+
 interface Props {
-  prompt: QuizPrompt;
+  prompt?: QuizPrompt;
   width: number;
   height: number;
+  onPositionTap?: (pos: FretPosition) => void;
+  highlightedPositions?: HighlightedPosition[];
 }
 
 const MARKER_FRETS = [3, 5, 7, 9];
@@ -31,14 +39,19 @@ function layout(width: number, height: number) {
   }
 
   function yForString(index: number): number {
-    // invert so highE (index 5) is at top, lowE (index 0) is at bottom
     return TOP_INSET + (GUITAR_STRINGS.length - 1 - index) * stringSpacing;
   }
 
   return { fretSpacing, stringSpacing, rightEdge, bottomEdge, xForFret, yForString };
 }
 
-export default function FretboardView({ prompt, width, height }: Props) {
+export default function FretboardView({
+  prompt,
+  width,
+  height,
+  onPositionTap,
+  highlightedPositions,
+}: Props) {
   const l = layout(width, height);
   const markerY = TOP_INSET + (l.bottomEdge - TOP_INSET) / 2;
 
@@ -109,21 +122,65 @@ export default function FretboardView({ prompt, width, height }: Props) {
           />
         ))}
 
-        {/* prompt dot */}
-        <Circle
-          cx={l.xForFret(prompt.position.fret)}
-          cy={l.yForString(prompt.position.string.index)}
-          r={12}
-          fill="#007AFF"
-        />
-        <Circle
-          cx={l.xForFret(prompt.position.fret)}
-          cy={l.yForString(prompt.position.string.index)}
-          r={12}
-          fill="none"
-          stroke="rgba(255,255,255,0.9)"
-          strokeWidth={2}
-        />
+        {/* prompt dot (forward drill) */}
+        {prompt && (
+          <>
+            <Circle
+              cx={l.xForFret(prompt.position.fret)}
+              cy={l.yForString(prompt.position.string.index)}
+              r={12}
+              fill="#007AFF"
+            />
+            <Circle
+              cx={l.xForFret(prompt.position.fret)}
+              cy={l.yForString(prompt.position.string.index)}
+              r={12}
+              fill="none"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth={2}
+            />
+          </>
+        )}
+
+        {/* highlighted positions (inverse drill reveal / wrong-tap flash) */}
+        {highlightedPositions?.map(({ pos, color }) => (
+          <React.Fragment key={`hl-${pos.string.index}-${pos.fret}`}>
+            <Circle
+              cx={l.xForFret(pos.fret)}
+              cy={l.yForString(pos.string.index)}
+              r={12}
+              fill={color}
+            />
+            <Circle
+              cx={l.xForFret(pos.fret)}
+              cy={l.yForString(pos.string.index)}
+              r={12}
+              fill="none"
+              stroke="rgba(255,255,255,0.9)"
+              strokeWidth={2}
+            />
+          </React.Fragment>
+        ))}
+
+        {/* tap hit targets (inverse drill) */}
+        {onPositionTap && GUITAR_STRINGS.map(string =>
+          Array.from({ length: FRET_COUNT + 1 }, (_, fret) => {
+            const x = fret === 0
+              ? 0
+              : LEFT_INSET + (fret - 1) * l.fretSpacing;
+            const w = fret === 0 ? LEFT_INSET : l.fretSpacing;
+            const y = l.yForString(string.index) - l.stringSpacing / 2;
+            return (
+              <Rect
+                key={`tap-${string.index}-${fret}`}
+                x={x} y={y}
+                width={w} height={l.stringSpacing}
+                fill="transparent"
+                onPress={() => onPositionTap({ string, fret })}
+              />
+            );
+          })
+        )}
       </Svg>
     </View>
   );

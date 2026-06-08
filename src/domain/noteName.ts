@@ -67,3 +67,10 @@ export function isNatural(note: NoteName): boolean {
 export function accessibilityId(note: NoteName): string {
   return note.replace('/', '_').replace('#', 's').replace('b', 'f');
 }
+
+export function displayNoteForAccidental(note: NoteName, display: AccidentalDisplay): string {
+  if (isNatural(note)) return note;
+  const idx = chromaticNotes.indexOf(note);
+  if (idx === -1) return note;
+  return display === 'sharp' ? chromaticSharpDisplay[idx] : chromaticFlatDisplay[idx];
+}

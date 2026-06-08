@@ -1,6 +1,7 @@
-import { GuitarStringDef } from './guitarString';
+import { GuitarStringDef, GUITAR_STRINGS } from './guitarString';
 import { NoteName, noteNameFromPitchClass, isNatural } from './noteName';
 import { NotePracticeMode } from './notePracticeMode';
+import { FretRange, fretRangeToArray } from './fretRange';
 
 export interface FretPosition {
   string: GuitarStringDef;
@@ -24,4 +25,16 @@ export function naturalNoteName(pos: FretPosition): NoteName | null {
 export function noteNameForMode(pos: FretPosition, mode: NotePracticeMode): NoteName | null {
   if (mode === 'chromatic') return chromaticNoteName(pos);
   return naturalNoteName(pos);
+}
+
+export function getAllPositionsForNote(note: NoteName, fretRange: FretRange): FretPosition[] {
+  const frets = fretRangeToArray(fretRange);
+  const positions: FretPosition[] = [];
+  for (const string of GUITAR_STRINGS) {
+    for (const fret of frets) {
+      const pos: FretPosition = { string, fret };
+      if (chromaticNoteName(pos) === note) positions.push(pos);
+    }
+  }
+  return positions;
 }
