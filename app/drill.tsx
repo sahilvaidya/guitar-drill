@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, useWindowDimensions,
-  Pressable, SafeAreaView,
+  Pressable, SafeAreaView, Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { usePracticeSession, useAnswerChoices } from '@/store/usePracticeSession';
@@ -137,11 +137,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 2,
+      },
+    }),
   },
   promptInstruction: { fontSize: 13, color: '#8E8E93', marginBottom: 4 },
   promptPosition: { fontSize: 20, fontWeight: '700', color: '#1C1C1E', marginBottom: 2 },

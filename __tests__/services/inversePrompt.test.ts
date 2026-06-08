@@ -7,10 +7,14 @@ const naturalConfig: QuizEngineConfig = { mode: 'natural', fretRange: DEFAULT_FR
 const chromaticConfig: QuizEngineConfig = { mode: 'chromatic', fretRange: DEFAULT_FRET_RANGE };
 
 describe('generateInversePrompt', () => {
-  it('returns a prompt with a note that has valid positions', () => {
+  it('returns a prompt with a target position and a 3×4 window', () => {
     const prompt = generateInversePrompt(naturalConfig, [], 'sharp');
     expect(prompt).not.toBeNull();
-    expect(prompt!.validPositions.length).toBeGreaterThan(0);
+    expect(prompt!.windowStrings).toHaveLength(3);
+    expect(prompt!.windowFrets).toHaveLength(4);
+    // Target position must be inside the window
+    expect(prompt!.windowStrings.map(s => s.index)).toContain(prompt!.targetPosition.string.index);
+    expect(prompt!.windowFrets).toContain(prompt!.targetPosition.fret);
   });
 
   it('targetNote is a natural note in natural mode', () => {
@@ -84,14 +88,28 @@ describe('generateInversePrompt', () => {
     }
   });
 
-  it('validPositions all belong to the targetNote', () => {
+  it('targetPosition belongs to the targetNote', () => {
     for (let i = 0; i < 10; i++) {
       const prompt = generateInversePrompt(naturalConfig, [], 'sharp');
-      for (const pos of prompt!.validPositions) {
-        const pitchClass = (pos.string.openPitchClass + pos.fret) % 12;
-        const noteForPos = (['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'] as NoteName[])[pitchClass];
-        expect(noteForPos).toBe(prompt!.targetNote);
+      const pos = prompt!.targetPosition;
+      const pitchClass = (pos.string.openPitchClass + pos.fret) % 12;
+      const noteForPos = (['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'] as NoteName[])[pitchClass];
+      expect(noteForPos).toBe(prompt!.targetNote);
+    }
+  });
+
+  it('window contains exactly one occurrence of the targetNote', () => {
+    for (let i = 0; i < 20; i++) {
+      const prompt = generateInversePrompt(naturalConfig, [], 'sharp');
+      let count = 0;
+      for (const s of prompt!.windowStrings) {
+        for (const f of prompt!.windowFrets) {
+          const pitchClass = (s.openPitchClass + f) % 12;
+          const noteForPos = (['C', 'C#/Db', 'D', 'D#/Eb', 'E', 'F', 'F#/Gb', 'G', 'G#/Ab', 'A', 'A#/Bb', 'B'] as NoteName[])[pitchClass];
+          if (noteForPos === prompt!.targetNote) count++;
+        }
       }
+      expect(count).toBe(1);
     }
   });
 

@@ -1,18 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, StyleSheet, useWindowDimensions,
-  Pressable, SafeAreaView,
+  Pressable, SafeAreaView, Platform,
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useInversePracticeSession } from '@/store/useInversePracticeSession';
-import FretboardView from '@/components/FretboardView';
+import ZoomedFretboardView from '@/components/ZoomedFretboardView';
 import { StatChip, ChipRow } from '@/components/StatsChips';
 import { fretRangeLabel } from '@/domain/fretRange';
 import { FretPosition } from '@/domain/fretPosition';
 
-const FRETBOARD_HEIGHT = 220;
+const FRETBOARD_HEIGHT = 180;
 const AUTO_ADVANCE_MS = 1500;
-const WRONG_FLASH_MS = 700;
 
 export default function InverseDrillScreen() {
   const router = useRouter();
@@ -20,13 +19,12 @@ export default function InverseDrillScreen() {
   const fretboardWidth = width - 32;
 
   const {
-    prompt, revealPositions, wrongTapPosition, isRevealed,
+    prompt, wrongTapPositions, isRevealed,
     sessionStats, lifetimeStats, fretRange,
-    initialize, tapPosition, nextPrompt, clearWrongTap,
+    initialize, tapPosition, nextPrompt,
   } = useInversePracticeSession();
 
   const autoAdvanceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const wrongFlashTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     initialize();
@@ -34,33 +32,16 @@ export default function InverseDrillScreen() {
 
   useEffect(() => {
     if (isRevealed) {
-      autoAdvanceTimer.current = setTimeout(() => {
-        nextPrompt();
-      }, AUTO_ADVANCE_MS);
+      autoAdvanceTimer.current = setTimeout(() => nextPrompt(), AUTO_ADVANCE_MS);
     }
     return () => {
       if (autoAdvanceTimer.current) clearTimeout(autoAdvanceTimer.current);
     };
   }, [isRevealed]);
 
-  useEffect(() => {
-    if (wrongTapPosition) {
-      wrongFlashTimer.current = setTimeout(() => {
-        clearWrongTap();
-      }, WRONG_FLASH_MS);
-    }
-    return () => {
-      if (wrongFlashTimer.current) clearTimeout(wrongFlashTimer.current);
-    };
-  }, [wrongTapPosition]);
-
-  const handlePositionTap = (pos: FretPosition) => {
-    tapPosition(pos);
-  };
-
   const highlighted = [
-    ...revealPositions.map(pos => ({ pos, color: '#28A745' })),
-    ...(wrongTapPosition ? [{ pos: wrongTapPosition, color: '#DC3545' }] : []),
+    ...(isRevealed && prompt ? [{ pos: prompt.targetPosition, color: '#28A745' }] : []),
+    ...wrongTapPositions.map(pos => ({ pos, color: '#DC3545' })),
   ];
 
   if (!prompt) {
@@ -88,38 +69,35 @@ export default function InverseDrillScreen() {
       />
       <SafeAreaView style={styles.container}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* session stats */}
           <ChipRow>
             <StatChip label="Solved" value={sessionStats.solvedPrompts} />
             <StatChip label="Attempts" value={sessionStats.attempts} />
             <StatChip label="Streak" value={sessionStats.streak} />
           </ChipRow>
 
-          {/* prompt card */}
           <View style={styles.card}>
             <Text style={styles.promptInstruction}>Tap this note on the fretboard</Text>
             <Text style={styles.promptNote}>{prompt.displayNote}</Text>
             <Text style={styles.promptRange}>{fretRangeLabel(fretRange)}</Text>
           </View>
 
-          {/* fretboard */}
-          <FretboardView
+          <ZoomedFretboardView
+            windowStrings={prompt.windowStrings}
+            windowFrets={prompt.windowFrets}
             width={fretboardWidth}
             height={FRETBOARD_HEIGHT}
-            onPositionTap={isRevealed ? undefined : handlePositionTap}
+            onPositionTap={isRevealed ? undefined : (pos: FretPosition) => tapPosition(pos)}
             highlightedPositions={highlighted}
           />
 
-          {/* feedback */}
           {isRevealed && (
             <View style={[styles.card, styles.feedbackCorrect]}>
               <Text style={[styles.feedbackText, styles.feedbackTextCorrect]}>
-                ✓ Correct — all positions highlighted
+                ✓ Correct
               </Text>
             </View>
           )}
 
-          {/* lifetime stats */}
           <ChipRow>
             <StatChip label="Total" value={lifetimeStats.totalAttempts} />
             <StatChip label="Solved" value={lifetimeStats.solvedPrompts} />
@@ -142,14 +120,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    ...Platform.select({
+      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.06)' } as object,
+      default: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.06,
+        shadowRadius: 4,
+        elevation: 2,
+      },
+    }),
   },
   promptInstruction: { fontSize: 13, color: '#8E8E93', marginBottom: 4 },
-  promptNote: { fontSize: 48, fontWeight: '800', color: '#1C1C1E', marginBottom: 2 },
+  promptNote: { fontSize: 56, fontWeight: '800', color: '#1C1C1E', marginBottom: 2 },
   promptRange: { fontSize: 13, color: '#8E8E93' },
 
   feedbackCorrect: { backgroundColor: '#D4EDDA', borderWidth: 1, borderColor: '#28A745' },

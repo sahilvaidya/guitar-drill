@@ -1,8 +1,7 @@
 import { create } from 'zustand';
 import { InversePrompt } from '@/domain/inversePrompt';
-import { FretPosition, fretPositionId, getAllPositionsForNote } from '@/domain/fretPosition';
-import { NoteName } from '@/domain/noteName';
-import { AccidentalDisplay } from '@/domain/noteName';
+import { FretPosition, fretPositionId } from '@/domain/fretPosition';
+import { NoteName, AccidentalDisplay } from '@/domain/noteName';
 import { NotePracticeMode, DEFAULT_PRACTICE_MODE } from '@/domain/notePracticeMode';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import { QuizEngineConfig, generateInversePrompt } from '@/services/quizEngine';
@@ -26,8 +25,7 @@ interface InverseSessionStats {
 
 interface InversePracticeState {
   prompt: InversePrompt | null;
-  revealPositions: FretPosition[];
-  wrongTapPosition: FretPosition | null;
+  wrongTapPositions: FretPosition[];  // accumulates until next prompt
   isRevealed: boolean;
   sessionStats: InverseSessionStats;
   lifetimeStats: InverseLifetimeStats;
@@ -41,7 +39,6 @@ interface InversePracticeActions {
   initialize: () => Promise<void>;
   tapPosition: (pos: FretPosition) => Promise<void>;
   nextPrompt: () => void;
-  clearWrongTap: () => void;
 }
 
 const initialSessionStats: InverseSessionStats = {
@@ -62,8 +59,7 @@ function engineConfig(state: Pick<InversePracticeState, 'mode' | 'fretRange'>): 
 export const useInversePracticeSession = create<InversePracticeState & InversePracticeActions>(
   (set, get) => ({
     prompt: null,
-    revealPositions: [],
-    wrongTapPosition: null,
+    wrongTapPositions: [],
     isRevealed: false,
     sessionStats: initialSessionStats,
     lifetimeStats: EMPTY_INVERSE_LIFETIME_STATS,
@@ -89,16 +85,13 @@ export const useInversePracticeSession = create<InversePracticeState & InversePr
       const state = get();
       if (!state.prompt || state.isRevealed) return;
 
-      const isCorrect = state.prompt.validPositions.some(
-        p => p.string.index === pos.string.index && p.fret === pos.fret,
-      );
+      const tp = state.prompt.targetPosition;
+      const isCorrect = tp.string.index === pos.string.index && tp.fret === pos.fret;
 
       if (isCorrect) {
         const newStreak = state.sessionStats.streak + 1;
         set(s => ({
           isRevealed: true,
-          revealPositions: s.prompt!.validPositions,
-          wrongTapPosition: null,
           sessionStats: {
             ...s.sessionStats,
             solvedPrompts: s.sessionStats.solvedPrompts + 1,
@@ -111,13 +104,11 @@ export const useInversePracticeSession = create<InversePracticeState & InversePr
         set({ lifetimeStats });
       } else {
         const tapId = fretPositionId(pos);
-        const alreadyTapped = state.wrongTapPosition
-          ? fretPositionId(state.wrongTapPosition) === tapId
-          : false;
+        const alreadyTapped = state.wrongTapPositions.some(p => fretPositionId(p) === tapId);
         if (alreadyTapped) return;
 
         set(s => ({
-          wrongTapPosition: pos,
+          wrongTapPositions: [...s.wrongTapPositions, pos],
           sessionStats: {
             ...s.sessionStats,
             attempts: s.sessionStats.attempts + 1,
@@ -148,8 +139,7 @@ export const useInversePracticeSession = create<InversePracticeState & InversePr
       );
       set({
         prompt: next,
-        revealPositions: [],
-        wrongTapPosition: null,
+        wrongTapPositions: [],
         isRevealed: false,
         accidentalDisplay,
         sessionStats: {
@@ -158,7 +148,5 @@ export const useInversePracticeSession = create<InversePracticeState & InversePr
         },
       });
     },
-
-    clearWrongTap: () => set({ wrongTapPosition: null }),
   }),
 );
