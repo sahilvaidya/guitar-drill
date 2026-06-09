@@ -12,6 +12,7 @@ const KEYS = {
   timingStats: 'timingStats',
   inverseLifetimeStats: 'inverseLifetimeStats',
   inverseMissedNotes: 'inverseMissedNotes',
+  speedGameBestScore: 'speedGameBestScore',
 } as const;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -219,4 +220,24 @@ export async function recordInverseMiss(note: NoteName): Promise<void> {
   const notes = await loadInverseMissedNotes();
   const updated = [note, ...notes].slice(0, 10);
   await AsyncStorage.setItem(KEYS.inverseMissedNotes, JSON.stringify(updated));
+}
+
+// ── Speed Game ─────────────────────────────────────────────────────────────
+
+export async function loadSpeedGameBestScore(): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.speedGameBestScore);
+    const parsed = raw === null ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/** Persist the score if it beats the stored best; returns the current best. */
+export async function recordSpeedGameScore(score: number): Promise<number> {
+  const best = await loadSpeedGameBestScore();
+  const newBest = Math.max(best, score);
+  await AsyncStorage.setItem(KEYS.speedGameBestScore, String(newBest));
+  return newBest;
 }

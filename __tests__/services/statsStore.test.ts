@@ -9,6 +9,8 @@ import {
   recordMiss,
   loadTimingStats,
   recordCorrectAnswerDuration,
+  loadSpeedGameBestScore,
+  recordSpeedGameScore,
   EMPTY_LIFETIME_STATS,
 } from '../../src/services/statsStore';
 
@@ -126,5 +128,29 @@ describe('timingStats', () => {
     for (let i = 0; i < 7; i++) await recordCorrectAnswerDuration(i + 1);
     const t = await loadTimingStats();
     expect(t.recentDurations).toHaveLength(5);
+  });
+});
+
+describe('speedGameBestScore', () => {
+  test('defaults to 0 when nothing stored', async () => {
+    expect(await loadSpeedGameBestScore()).toBe(0);
+  });
+
+  test('records a new best score', async () => {
+    const best = await recordSpeedGameScore(12);
+    expect(best).toBe(12);
+    expect(await loadSpeedGameBestScore()).toBe(12);
+  });
+
+  test('keeps the higher score', async () => {
+    await recordSpeedGameScore(12);
+    const best = await recordSpeedGameScore(7);
+    expect(best).toBe(12);
+    expect(await loadSpeedGameBestScore()).toBe(12);
+  });
+
+  test('recovers from corrupt stored value', async () => {
+    store['speedGameBestScore'] = 'not-a-number';
+    expect(await loadSpeedGameBestScore()).toBe(0);
   });
 });

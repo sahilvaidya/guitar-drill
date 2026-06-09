@@ -31,9 +31,9 @@ export default function PracticeTab() {
       <View style={styles.content}>
         <Text style={styles.sectionHeader}>Drills</Text>
         <DrillCard
-          title="Note Finder"
-          description="Identify the note at a highlighted fret position."
-          onPress={() => router.push('/drill')}
+          title="Note Identification"
+          description="Name notes on the fretboard — train at your own pace or race the clock."
+          onPress={() => router.push('/note-identification')}
         />
         <DrillCard
           title="Chord Detector"
