@@ -17,6 +17,10 @@ export default function StudyLayout() {
         name="triads"
         options={{ title: 'Triads' }}
       />
+      <Stack.Screen
+        name="caged"
+        options={{ title: 'CAGED System' }}
+      />
     </Stack>
   );
 }

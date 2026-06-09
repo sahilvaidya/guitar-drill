@@ -81,10 +81,9 @@ export default function StudyHomeScreen() {
       <Text style={styles.sectionHeader}>Systems</Text>
       <StudyTopicCard
         title="CAGED System"
-        description="Five moveable chord shapes that cover the entire fretboard."
+        description="Pentatonic boxes, scale positions, and two-string thirds and sixths."
         icon="grid"
-        onPress={() => {}}
-        available={false}
+        onPress={() => router.push('/study/caged')}
       />
     </ScrollView>
   );

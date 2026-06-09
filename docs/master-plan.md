@@ -50,12 +50,13 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
 - **Bottom tab navigation**: Practice tab (existing drills) + Study tab (new reference section)
-- **Study section framework**: Study home with topic cards (Triads available; Scales, Intervals, CAGED coming soon); Triads screen with Reference / Practice segmented layout
+- **Study section framework**: Study home with topic cards (Triads and CAGED available; Scales, Intervals coming soon); Triads screen with Reference / Practice segmented layout
 - **Triad domain** (`src/domain/triad.ts`): `TriadQuality` type, interval tables, formula/description/color lookup maps, `triadNotes()` pure function; all four qualities (major/minor/diminished/augmented) covered
 - **Triad shapes** (`src/domain/triadShapes.ts`): all 3 closed-position voicings (root pos / 1st inv / 2nd inv) for all 4 qualities on strings G·B·e; `NoteRole` type with display labels; full musical verification via 96 unit tests (interval relationships + spot-checks for C major/minor/dim/aug)
 - **TriadDiagramView** (`src/components/TriadDiagramView.tsx`): SVG chord diagram showing 3 strings × 4 fret spaces with role-labelled dots (R solid, others tinted); quality-color-coded; inversion label below
 - Triads reference screen: "coming soon" placeholder replaced with horizontally-scrollable row of 3 `TriadDiagramView` instances per quality card; all 4 qualities fully diagrammed
 - **Inverse Note Finder drill** (`app/inverse-drill.tsx`): note name shown as prompt; user taps a matching fret position; correct tap reveals all valid positions in green with 1.5s auto-advance; wrong tap flashes red and retries; chromatic mode alternates sharp/flat prompt spellings; separate stats (attempts, solved prompts, best streak) persisted in AsyncStorage; adaptive weighting boosts notes the user has missed; `FretboardView` extended with optional `onPositionTap` and `highlightedPositions` props; `getAllPositionsForNote` domain helper added to `fretPosition.ts`; `generateInversePrompt` service function in `quizEngine.ts`; 15 new unit tests
+- **CAGED study section** (`app/(tabs)/study/caged.tsx`): four segments — Pentatonic boxes, full Scale positions, two-string 3rds, and two-string 6ths. Pentatonic and Scale segments show all five CAGED boxes up the neck with a Major/Minor toggle that relabels every dot's scale degree and root (same fingerings, relative-key framing: C major / A minor). Thirds harmonize one octave on each adjacent pair of the first four strings (e+B, B+G, G+D); sixths skip a string (e+G, B+D), with M/m interval quality labelled per pair. Domain data in `src/domain/cagedShapes.ts` (boxes as moveable fret offsets, degree labels derived from pitch classes, `buildDiatonicRun` generator); diagrams via `ScaleBoxDiagramView` (6-string box) and `IntervalRunView` (scrollable two-string run); musical correctness verified by unit tests
 
 ## Quality Bar
 
@@ -82,7 +83,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
   - *Reference*: select a root note + mode (major, natural minor, pentatonic major/minor, blues); the full fretboard SVG highlights all notes of that scale with the root in a distinct color.
   - *Drill*: a position is highlighted; the user names the scale degree (1–7) or identifies whether it's in the selected scale. Respects active fret range.
 
-- **CAGED system reference** — a "CAGED" topic card in the Study section. A guided reference walking through each of the five chord shapes (C, A, G, E, D) as they appear up the neck, showing how they connect into a continuous map. Each shape screen shows the fretboard with the chord tones colored and the scale tones of the same key faded in. Read-only reference for now.
+- **CAGED system reference** — **Partially completed.** The CAGED topic card now opens a reference with pentatonic boxes, scale positions, and two-string thirds/sixths (see Completed Capabilities). Remaining idea from the original scope: per-shape chord-tone overlays (chord tones colored with scale tones of the same key faded in) connecting the five chord shapes into a continuous map.
 
 - **Interval recognition drill** — a new drill mode (Practice tab). Two fret positions are highlighted; the user names the interval (e.g. P5, M3, m7). Alternatively: given a root position, tap the fret that is a specified interval away. Covers all diatonic intervals; chromatic optional. New domain file `src/domain/interval.ts`; new drill screen `app/intervals.tsx`.
 
