@@ -37,8 +37,8 @@ export default function PracticeTab() {
         />
         <DrillCard
           title="Chord Detector"
-          description="Identify a chord from its fretboard shape."
-          available={false}
+          description="Tap notes on the fretboard and see what chord you've built."
+          onPress={() => router.push('/chord-detector')}
         />
         <DrillCard
           title="Inverse Note Finder"

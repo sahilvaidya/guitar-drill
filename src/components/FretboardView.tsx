@@ -8,6 +8,8 @@ import { GUITAR_STRINGS } from '@/domain/guitarString';
 interface HighlightedPosition {
   pos: FretPosition;
   color: string;
+  /** Optional text rendered inside the dot (e.g. the note name). */
+  label?: string;
 }
 
 interface Props {
@@ -142,8 +144,8 @@ export default function FretboardView({
           </>
         )}
 
-        {/* highlighted positions (inverse drill reveal / wrong-tap flash) */}
-        {highlightedPositions?.map(({ pos, color }) => (
+        {/* highlighted positions (inverse drill reveal / wrong-tap flash / chord detector) */}
+        {highlightedPositions?.map(({ pos, color, label }) => (
           <React.Fragment key={`hl-${pos.string.index}-${pos.fret}`}>
             <Circle
               cx={l.xForFret(pos.fret)}
@@ -159,6 +161,18 @@ export default function FretboardView({
               stroke="rgba(255,255,255,0.9)"
               strokeWidth={2}
             />
+            {label && (
+              <SvgText
+                x={l.xForFret(pos.fret)}
+                y={l.yForString(pos.string.index) + (label.length > 1 ? 3 : 3.5)}
+                fontSize={label.length > 1 ? 9 : 11}
+                fontWeight="700"
+                fill="#fff"
+                textAnchor="middle"
+              >
+                {label}
+              </SvgText>
+            )}
           </React.Fragment>
         ))}
 
