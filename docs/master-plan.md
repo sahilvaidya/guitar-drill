@@ -11,7 +11,8 @@ Future work should build on that working loop instead of treating the app like a
 - Portrait-first iPhone app (Expo React Native, fully offline)
 - Standard-tuned six-string fretboard, frets 0–12
 - Natural-note practice by default; optional chromatic mode with combined accidentals (C#/Db)
-- Home screen for drill mode selection (Note Finder available; future modes stubbed)
+- Practice tab: Note Identification (Training drill + Speed Game), Inverse Note Finder, and the Chord Detector tool
+- Study tab: Chord Shapes library, Triads reference, and CAGED system (pentatonics, scale positions, thirds/sixths)
 - Note Finder drill screen with fretboard visualization, answer grid, and auto-advance
 - Settings screen: mode toggle, fret range steppers, recent misses list
 - Session and lifetime stats persisted locally
@@ -50,7 +51,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
 - **Bottom tab navigation**: Practice tab (existing drills) + Study tab (new reference section)
-- **Study section framework**: Study home with topic cards (Triads and CAGED available; Scales, Intervals coming soon); Triads screen with Reference / Practice segmented layout
+- **Study section framework**: Study home with topic cards (Chord Shapes, Triads, and CAGED available; Scales, Intervals coming soon); Triads screen with Reference / Practice segmented layout
 - **Triad domain** (`src/domain/triad.ts`): `TriadQuality` type, interval tables, formula/description/color lookup maps, `triadNotes()` pure function; all four qualities (major/minor/diminished/augmented) covered
 - **Triad shapes** (`src/domain/triadShapes.ts`): all 3 closed-position voicings (root pos / 1st inv / 2nd inv) for all 4 qualities on strings G·B·e; `NoteRole` type with display labels; full musical verification via 96 unit tests (interval relationships + spot-checks for C major/minor/dim/aug)
 - **TriadDiagramView** (`src/components/TriadDiagramView.tsx`): SVG chord diagram showing 3 strings × 4 fret spaces with role-labelled dots (R solid, others tinted); quality-color-coded; inversion label below
@@ -58,6 +59,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - **Inverse Note Finder drill** (`app/inverse-drill.tsx`): note name shown as prompt; user taps a matching fret position; correct tap reveals all valid positions in green with 1.5s auto-advance; wrong tap flashes red and retries; chromatic mode alternates sharp/flat prompt spellings; separate stats (attempts, solved prompts, best streak) persisted in AsyncStorage; adaptive weighting boosts notes the user has missed; `FretboardView` extended with optional `onPositionTap` and `highlightedPositions` props; `getAllPositionsForNote` domain helper added to `fretPosition.ts`; `generateInversePrompt` service function in `quizEngine.ts`; 15 new unit tests
 - **Chord Detector** (`app/chord-detector.tsx`): interactive tool on the Practice tab — tap fretboard positions (one note per string, open strings supported, tap again to mute) and the app names the chord live. Detection in `src/domain/chordDetect.ts` covers the essentials: major, minor, dim, sus2, sus4, dominant 7th, major 7th, minor 7th, dim7, plus shell voicings (omitted 5th) for 7th chords and slash naming (e.g. C/E, D/F#) when the lowest sounding note isn't the root. Ambiguous sets (sus2/sus4, symmetric dim7) resolve to the bass-rooted reading with alternates listed. Root notes highlighted orange, other tones blue, note names inside the dots (`FretboardView` gained an optional highlight `label`); conventional accidental spellings (C#, Eb, F#, Ab, Bb); 17 unit tests including real open-shape voicings
 - **Speed Game** (`app/speed-game.tsx`): time-pressure Note Identification mode. Home's Note Finder card became a "Note Identification" submenu (`app/note-identification.tsx`) with Training (existing drill, unchanged) and Speed Game entries. 3 answer buttons (correct + 2 distractors from nearby fretboard positions / adjacent half-steps, `src/domain/speedGameDistractors.ts`); correct answers advance immediately, wrong taps add a 6s penalty; game over when the rolling 5-prompt average response time exceeds 5s (`src/domain/speedGame.ts`). Live stock chart of response times (`src/components/ResponseTimeChart.tsx`) with a red 5s danger line and line color shifting green → amber → red as the average climbs. Game state in `src/store/useSpeedGame.ts` (zustand, injectable clock/rng for tests); `speedGameBestScore` persisted via `statsStore.ts`; respects practice mode (natural/chromatic incl. sharp/flat alternation) and active fret range; 34 new unit tests (distractors, rolling average, game-over trigger, store flow, best-score persistence)
+- **Chord Shapes library** (`app/(tabs)/study/chords.tsx`): a "Chord Shapes" topic card in the Study section with classic vertical chord charts (`src/components/ChordDiagramView.tsx`: nut/base-fret, X/O markers, barre bar, finger numbers, orange roots). Sections: open chords (C A G E D Am Em Dm), open 7th chords (G7 C7 D7 A7 E7 B7), suspended chords (Asus2/4, Dsus2/4, Esus4), barre chords with root on the 6th string (E-family: major, minor, 7, m7, plus the moveable 6th-root maj7 voicing), barre chords with root on the 5th string (A-family: major, minor, 7, m7, maj7), and power chords (6th- and 5th-string root). A root-note picker transposes all moveable shapes to any key, showing real fret positions and chord names. Shape data in `src/domain/chordShapes.ts`; every voicing (including all 12 transpositions of each moveable shape) is verified against the chord detector in unit tests
 - **CAGED study section** (`app/(tabs)/study/caged.tsx`): four segments — Pentatonic boxes, full Scale positions, two-string 3rds, and two-string 6ths. Pentatonic and Scale segments show all five CAGED boxes up the neck with a Major/Minor toggle that relabels every dot's scale degree and root (same fingerings, relative-key framing: C major / A minor). Thirds harmonize one octave on each adjacent pair of the first four strings (e+B, B+G, G+D); sixths skip a string (e+G, B+D), with M/m interval quality labelled per pair. Domain data in `src/domain/cagedShapes.ts` (boxes as moveable fret offsets, degree labels derived from pitch classes, `buildDiatonicRun` generator); diagrams via `ScaleBoxDiagramView` (6-string box) and `IntervalRunView` (scrollable two-string run); musical correctness verified by unit tests
 
 ## Quality Bar
@@ -79,21 +81,17 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ### Goal 2 — Learn fretboard and chords better
 
-- **Open & barre chord reference** — a "Chords" topic card in the Study section. Browse by root note → chord quality → voicing. Covers at minimum: open position (G, C, D, A, E, Am, Em, Dm) and moveable barre forms (E-shape and A-shape). Uses the same `TriadDiagramView` chord diagram component, extended to show 6 strings and standard fingering numbers.
-
 - **Scales module** — a "Scales" topic card in the Study section with two sub-sections:
   - *Reference*: select a root note + mode (major, natural minor, pentatonic major/minor, blues); the full fretboard SVG highlights all notes of that scale with the root in a distinct color.
   - *Drill*: a position is highlighted; the user names the scale degree (1–7) or identifies whether it's in the selected scale. Respects active fret range.
 
-- **CAGED system reference** — **Partially completed.** The CAGED topic card now opens a reference with pentatonic boxes, scale positions, and two-string thirds/sixths (see Completed Capabilities). Remaining idea from the original scope: per-shape chord-tone overlays (chord tones colored with scale tones of the same key faded in) connecting the five chord shapes into a continuous map.
+- **CAGED chord-tone overlays** — extend the existing CAGED study section with per-shape chord-tone overlays: chord tones colored with scale tones of the same key faded in, connecting the five chord shapes into a continuous map.
 
 - **Interval recognition drill** — a new drill mode (Practice tab). Two fret positions are highlighted; the user names the interval (e.g. P5, M3, m7). Alternatively: given a root position, tap the fret that is a specified interval away. Covers all diatonic intervals; chromatic optional. New domain file `src/domain/interval.ts`; new drill screen `app/intervals.tsx`.
 
 ### Goal 1 — Practice / remember what you know
 
 - **Triad practice drill** — fill in the stubbed Practice tab on the Triads screen. Show a triad quality and root; the user selects the correct set of notes from an answer grid (or taps positions on the fretboard). Uses `triadNotes()` from `src/domain/triad.ts`. Adaptive weighting applies the same way as the Note Finder.
-
-- ~~**Inverse note finder**~~ — **Completed.** See Completed Capabilities above.
 
 - **Spaced repetition / review sessions** — a "Review" entry point (on the Home or Practice tab) that surfaces items due today based on a lightweight SRS schedule (e.g. SM-2 variant). Each item is a fret position, chord shape, or scale pattern. Review history stored in AsyncStorage alongside existing stats. Complements the existing adaptive engine (which weights by miss frequency) with a time-based forgetting curve.
 
@@ -105,18 +103,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 - **Chord progression trainer** — show a progression (e.g. ii–V–I in G) and let the user practice finding the chord voicings up the neck in sequence. Teaches functional harmony and common movement patterns.
 
-- ~~**Speed Game**~~ — **Completed.** See Completed Capabilities above. Original spec follows for reference:
-  - **Navigation**: Home screen "Note Finder" card becomes a "Note Identification" submenu with two entries — **Training** (current drill, unchanged) and **Speed Game** (new).
-  - **Drill loop**: Same fretboard view with a highlighted position. Shows **3 answer buttons** (1 correct + 2 distractors — notes nearby on the fretboard or adjacent half-steps). Correct tap → immediate advance (no 1.5s delay). Wrong tap → +6s time penalty added to the rolling average; prompt retries.
-  - **Lose condition**: When the rolling 5-prompt average response time exceeds **5 seconds**, game over. Shows final score (# correct prompts), personal best, "Play Again" / "Home".
-  - **Stock chart**: Embedded above the answer buttons. X-axis = prompt number, Y-axis = response time in seconds. Each answer plots a point connected into a live line. A red horizontal danger line marks the 5s threshold. Line color shifts toward red as average approaches threshold.
-  - **Persistence**: `speedGameBestScore` (int, prompt count) added to AsyncStorage via `statsStore.ts`.
-  - **New files**: `app/speed-game.tsx` (drill screen), `app/note-identification.tsx` (submenu screen), `src/domain/speedGameDistractors.ts` (distractor picking logic), `src/store/useSpeedGame.ts` (rolling average, game state).
-  - **Settings respected**: Active fret range and practice mode (natural/chromatic) apply; chromatic mode uses same sharp/flat alternation.
-  - **Acceptance criteria**: Submenu entry works; 3 buttons always include correct answer; chart updates live; game over fires at 5s average; penalty mechanic works; best score persists; Training mode is unchanged.
-  - **Tests**: Unit tests for distractor generation (always 2 distinct wrong notes, both modes), rolling average calculation (window of 5, < 5 samples), and game-over trigger logic.
-
-- ~~Chord detector~~ — **Completed** as an interactive tool rather than a quiz: see Completed Capabilities. (A quiz variant — show a shape, ask the user to name it — remains a possible future mode.)
+- **Chord naming quiz** — show a chord shape on the fretboard, ask the user to name it (the reverse of the Chord Detector tool; detection logic in `src/domain/chordDetect.ts` can generate and validate prompts).
 - Chord builder mode: give a chord name, ask the user to place the notes
 
 ## Next Agent Task

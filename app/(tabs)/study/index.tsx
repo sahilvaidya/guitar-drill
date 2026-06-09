@@ -56,6 +56,12 @@ export default function StudyHomeScreen() {
     >
       <Text style={styles.sectionHeader}>Chords</Text>
       <StudyTopicCard
+        title="Chord Shapes"
+        description="Open chords, barre shapes, 7th chords, sus and power chords."
+        icon="apps"
+        onPress={() => router.push('/study/chords')}
+      />
+      <StudyTopicCard
         title="Triads"
         description="Major, minor, diminished, and augmented triad theory and shapes."
         icon="musical-notes"

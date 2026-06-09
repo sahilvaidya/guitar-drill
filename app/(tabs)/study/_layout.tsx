@@ -21,6 +21,10 @@ export default function StudyLayout() {
         name="caged"
         options={{ title: 'CAGED System' }}
       />
+      <Stack.Screen
+        name="chords"
+        options={{ title: 'Chord Shapes' }}
+      />
     </Stack>
   );
 }
