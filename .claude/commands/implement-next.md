@@ -1,10 +1,10 @@
 # Implement Next Feature
 
-Implement the current `## Next Agent Task` from `docs/master-plan.md` following project patterns.
+Implement the current `## Next Agent Task` from `roadmap.md` following project patterns.
 
 ## Steps
 
-1. **Read context** — read `docs/master-plan.md` and `CLAUDE.md` in full before doing anything else
+1. **Read context** — read `roadmap.md` and `CLAUDE.md` in full before doing anything else
 
 2. **Confirm the task** — summarize the Next Agent Task back to the user in 2–3 sentences. If anything is ambiguous or missing, ask for clarification. **Wait for the user to explicitly confirm before proceeding to any implementation steps.** Do not assume approval.
 
@@ -27,12 +27,14 @@ Implement the current `## Next Agent Task` from `docs/master-plan.md` following 
 
 6. **Test** — run `npm test` and confirm all tests pass. Add new tests for any logic that isn't already covered.
 
-7. **Update master-plan.md**:
+7. **Update roadmap.md**:
    - Move the completed task into `## Completed Capabilities`
    - Set `## Next Agent Task` to the next logical roadmap item, with enough detail for a cold agent
    - If no obvious next task exists, leave a clear placeholder and note it for the user
 
-8. **Commit** — stage and commit all changes with a clear message describing what was implemented.
+8. **Update README.md** — add or adjust the feature list so it reflects the newly completed capability (user-facing wording, not implementation detail).
+
+9. **Commit** — stage and commit all changes with a clear message describing what was implemented.
 
 ## Constraints
 

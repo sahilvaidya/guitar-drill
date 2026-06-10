@@ -1,10 +1,10 @@
 # Feature Intake
 
-Turn a rough feature idea into a well-specified roadmap entry and update `docs/master-plan.md`.
+Turn a rough feature idea into a well-specified roadmap entry and update `roadmap.md`.
 
 ## Steps
 
-1. **Read context** — read `docs/master-plan.md` and `CLAUDE.md` before asking anything
+1. **Read context** — read `roadmap.md` and `CLAUDE.md` before asking anything
 
 2. **Understand the idea** — the user will describe a feature. Ask focused clarifying questions to nail down:
    - What problem does this solve or what skill does it build?
@@ -22,10 +22,10 @@ Turn a rough feature idea into a well-specified roadmap entry and update `docs/m
 
 4. **Show the spec** — present it to the user and confirm it matches their intent. Revise until approved.
 
-5. **Update master-plan.md** — add the approved spec to the appropriate roadmap section (Near-Term or Later). Write it in the same concise style as existing roadmap entries, with the full spec detail added as sub-bullets if needed.
+5. **Update roadmap.md** — add the approved spec to the appropriate roadmap section (Near-Term or Later). Write it in the same concise style as existing roadmap entries, with the full spec detail added as sub-bullets if needed.
 
 6. **If it should be next** — update the `## Next Agent Task` section to point at the new feature with enough detail for a cold agent to implement it without further clarification.
 
 ## Output
 
-A confirmed, written roadmap entry in `docs/master-plan.md`. The user can then run `/implement-next` when ready to build it.
+A confirmed, written roadmap entry in `roadmap.md`. The user can then run `/implement-next` when ready to build it.

@@ -67,4 +67,4 @@ archived-swift/ Original Swift/SwiftUI project — kept for reference, delete wh
 
 ## Product Context
 
-See `docs/master-plan.md` for full product direction, roadmap, completed capabilities, and the current agent task.
+See `roadmap.md` for full product direction, roadmap, completed capabilities, and the current agent task. `README.md` carries the user-facing feature list — update it whenever a roadmap item is completed.

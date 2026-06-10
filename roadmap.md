@@ -1,4 +1,4 @@
-# Guitar Drill — Master Plan
+# Guitar Drill — Roadmap
 
 ## Product Direction
 
@@ -122,7 +122,7 @@ Implementation order:
 4. **Root-note picker UI** — add a horizontally-scrollable row of 12 root buttons (A–G + accidentals, using natural names by default) at the top of the Reference section, above the quality cards; selected root stored in component state (default: C)
 5. **Wire up** — pass the selected root pitch class into each `TriadCard`; compute `baseFret` for each shape via the helper; pass it to `TriadDiagramView`; also update the "Example (C):" note pills row to reflect the selected root
 6. Add unit tests for `baseFretForShape` (verify fret numbers for a handful of root/shape combinations match known guitar positions)
-7. Update master-plan.md and commit
+7. Update roadmap.md and commit
 
 Acceptance criteria:
 - Tapping "G" shows all shape diagrams shifted to the G position with correct fret numbers
