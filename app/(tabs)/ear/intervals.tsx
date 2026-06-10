@@ -9,7 +9,7 @@ import {
   DIRECTION_SETTINGS, EAR_LEVELS, LEVEL_INTERVALS,
   INTERVAL_FULL_NAMES, INTERVAL_SONG_HINTS,
 } from '@/domain/earInterval';
-import { playIntervalPrompt, stopIntervalAudio } from '@/services/earAudio';
+import { playIntervalPrompt, startAudioKeepAlive, stopIntervalAudio } from '@/services/earAudio';
 import { StatChip, ChipRow } from '@/components/StatsChips';
 
 const AUTO_ADVANCE_MS = 1500;
@@ -134,6 +134,8 @@ export default function IntervalTrainingScreen() {
 
   useEffect(() => {
     initialize();
+    // Keeps the iOS audio pipeline warm so playback never starts clipped.
+    startAudioKeepAlive().catch(() => {});
     return () => stopIntervalAudio();
   }, []);
 
