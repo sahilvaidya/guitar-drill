@@ -183,9 +183,11 @@ export default function IntervalTrainingScreen() {
           <Text style={styles.promptDirection}>
             {PROMPT_DIRECTION_LABELS[prompt.direction]}
           </Text>
+          {/* Disabled once solved so a replay can't overlap the next prompt's auto-play. */}
           <Pressable
-            style={styles.playButton}
+            style={[styles.playButton, feedback?.isCorrect && styles.playButtonDisabled]}
             onPress={() => playIntervalPrompt(prompt).catch(() => {})}
+            disabled={feedback?.isCorrect === true}
           >
             <Ionicons name="play" size={20} color="#fff" />
             <Text style={styles.playButtonText}>Replay</Text>
@@ -272,6 +274,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingVertical: 12,
   },
+  playButtonDisabled: { backgroundColor: '#AEC9EA' },
   playButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
 
   feedbackCorrect: { backgroundColor: '#D4EDDA', borderWidth: 1, borderColor: '#28A745' },

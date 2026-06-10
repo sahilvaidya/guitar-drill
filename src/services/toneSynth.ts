@@ -6,6 +6,12 @@ import { EarIntervalPrompt, secondMidi } from '@/domain/earInterval';
 export const SAMPLE_RATE = 22050;
 export const TONE_SECONDS = 1.1;
 export const MELODIC_GAP_SECONDS = 0.15;
+/**
+ * Silence rendered before the first note. iOS swallows the first fraction of
+ * a second of output while the audio hardware spins up from idle, so audio
+ * starting at sample zero gets its attack clipped on a cold start.
+ */
+export const LEAD_IN_SECONDS = 0.3;
 
 export function midiToFrequency(midi: number): number {
   return 440 * Math.pow(2, (midi - 69) / 12);
@@ -70,17 +76,18 @@ export function pluck(
 export function renderIntervalTone(prompt: EarIntervalPrompt): Float32Array {
   const first = pluck(midiToFrequency(prompt.rootMidi));
   const second = pluck(midiToFrequency(secondMidi(prompt)));
+  const leadIn = Math.round(LEAD_IN_SECONDS * SAMPLE_RATE);
 
   if (prompt.direction === 'harmonic') {
-    const out = new Float32Array(first.length);
-    for (let i = 0; i < out.length; i++) out[i] = 0.6 * (first[i] + second[i]);
+    const out = new Float32Array(leadIn + first.length);
+    for (let i = 0; i < first.length; i++) out[leadIn + i] = 0.6 * (first[i] + second[i]);
     return out;
   }
 
   const gap = Math.round(MELODIC_GAP_SECONDS * SAMPLE_RATE);
-  const out = new Float32Array(first.length + gap + second.length);
-  out.set(first, 0);
-  out.set(second, first.length + gap);
+  const out = new Float32Array(leadIn + first.length + gap + second.length);
+  out.set(first, leadIn);
+  out.set(second, leadIn + first.length + gap);
   return out;
 }
 

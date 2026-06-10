@@ -9,10 +9,14 @@ import { EarIntervalPrompt } from '@/domain/earInterval';
 import { renderIntervalWav } from './toneSynth';
 
 let player: AudioPlayer | null = null;
+let loadedUri: string | null = null;
 let audioModeReady = false;
 
+// Bump when the rendered audio format changes so stale cached WAVs are bypassed.
+const SYNTH_VERSION = 2;
+
 function promptFileName(prompt: EarIntervalPrompt): string {
-  return `ear-${prompt.rootMidi}-${prompt.interval}-${prompt.direction}.wav`;
+  return `ear-v${SYNTH_VERSION}-${prompt.rootMidi}-${prompt.interval}-${prompt.direction}.wav`;
 }
 
 function ensureCachedWav(prompt: EarIntervalPrompt): File {
@@ -31,12 +35,25 @@ export async function playIntervalPrompt(prompt: EarIntervalPrompt): Promise<voi
     audioModeReady = true;
   }
   const file = ensureCachedWav(prompt);
+
+  // Reuse a single player: restarting it from the top means repeated Replay
+  // taps can never layer multiple copies of the audio over each other.
+  if (player && loadedUri === file.uri) {
+    await player.seekTo(0);
+    player.play();
+    return;
+  }
+
+  player?.pause();
   player?.remove();
   player = createAudioPlayer({ uri: file.uri });
+  loadedUri = file.uri;
   player.play();
 }
 
 export function stopIntervalAudio(): void {
+  player?.pause();
   player?.remove();
   player = null;
+  loadedUri = null;
 }

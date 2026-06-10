@@ -2,6 +2,7 @@ import {
   SAMPLE_RATE,
   TONE_SECONDS,
   MELODIC_GAP_SECONDS,
+  LEAD_IN_SECONDS,
   midiToFrequency,
   pluck,
   renderIntervalTone,
@@ -88,24 +89,33 @@ describe('renderIntervalTone', () => {
   const melodic: EarIntervalPrompt = { interval: 'P5', direction: 'ascending', rootMidi: 52 };
   const harmonic: EarIntervalPrompt = { interval: 'M3', direction: 'harmonic', rootMidi: 52 };
 
+  const leadLen = Math.round(LEAD_IN_SECONDS * SAMPLE_RATE);
+
   it('melodic prompts contain two sequential tones separated by a gap', () => {
     const audio = renderIntervalTone(melodic);
     const toneLen = Math.round(TONE_SECONDS * SAMPLE_RATE);
     const gapLen = Math.round(MELODIC_GAP_SECONDS * SAMPLE_RATE);
-    expect(audio.length).toBe(2 * toneLen + gapLen);
+    expect(audio.length).toBe(leadLen + 2 * toneLen + gapLen);
     // energy in both note segments, near-silence in the gap
-    expect(rms(audio, 0, toneLen)).toBeGreaterThan(0.05);
-    expect(rms(audio, toneLen + gapLen, audio.length)).toBeGreaterThan(0.05);
-    expect(rms(audio, toneLen, toneLen + gapLen)).toBeLessThan(0.001);
+    expect(rms(audio, leadLen, leadLen + toneLen)).toBeGreaterThan(0.05);
+    expect(rms(audio, leadLen + toneLen + gapLen, audio.length)).toBeGreaterThan(0.05);
+    expect(rms(audio, leadLen + toneLen, leadLen + toneLen + gapLen)).toBeLessThan(0.001);
   });
 
   it('harmonic prompts play both notes simultaneously in a single tone length', () => {
     const audio = renderIntervalTone(harmonic);
-    expect(audio.length).toBe(Math.round(TONE_SECONDS * SAMPLE_RATE));
+    expect(audio.length).toBe(leadLen + Math.round(TONE_SECONDS * SAMPLE_RATE));
     let peak = 0;
     for (const s of audio) peak = Math.max(peak, Math.abs(s));
     expect(peak).toBeGreaterThan(0.3);
     expect(peak).toBeLessThanOrEqual(1);
+  });
+
+  it('starts with lead-in silence so a cold audio session cannot clip the attack', () => {
+    for (const prompt of [melodic, harmonic]) {
+      const audio = renderIntervalTone(prompt);
+      expect(rms(audio, 0, leadLen)).toBe(0);
+    }
   });
 });
 
@@ -142,7 +152,9 @@ describe('renderIntervalWav', () => {
     const wav = renderIntervalWav(prompt);
     expect(ascii(wav, 0, 4)).toBe('RIFF');
     const expectedSamples =
-      2 * Math.round(TONE_SECONDS * SAMPLE_RATE) + Math.round(MELODIC_GAP_SECONDS * SAMPLE_RATE);
+      Math.round(LEAD_IN_SECONDS * SAMPLE_RATE) +
+      2 * Math.round(TONE_SECONDS * SAMPLE_RATE) +
+      Math.round(MELODIC_GAP_SECONDS * SAMPLE_RATE);
     expect(wav.length).toBe(44 + expectedSamples * 2);
   });
 });
