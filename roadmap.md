@@ -12,6 +12,7 @@ Future work should build on that working loop instead of treating the app like a
 - Standard-tuned six-string fretboard, frets 0–12
 - Natural-note practice by default; optional chromatic mode with combined accidentals (C#/Db)
 - Practice tab: Note Identification (Training drill + Speed Game), Inverse Note Finder, and the Chord Detector tool
+- Ear tab: Interval Training drill with on-device tone synthesis (Note ID, Chord ID, Melodic Dictation planned)
 - Study tab: Chord Shapes library, Triads reference, and CAGED system (pentatonics, scale positions, thirds/sixths)
 - Note Finder drill screen with fretboard visualization, answer grid, and auto-advance
 - Settings screen: mode toggle, fret range steppers, recent misses list
@@ -62,6 +63,8 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - **Chord Shapes library** (`app/(tabs)/study/chords.tsx`): a "Chord Shapes" topic card in the Study section with classic vertical chord charts (`src/components/ChordDiagramView.tsx`: nut/base-fret, X/O markers, barre bar, finger numbers, orange roots). Sections: open chords (C A G E D Am Em Dm), open 7th chords (G7 C7 D7 A7 E7 B7), suspended chords (Asus2/4, Dsus2/4, Esus4), barre chords with root on the 6th string (E-family: major, minor, 7, m7, plus the moveable 6th-root maj7 voicing), barre chords with root on the 5th string (A-family: major, minor, 7, m7, maj7), and power chords (6th- and 5th-string root). A root-note picker transposes all moveable shapes to any key, showing real fret positions and chord names. Shape data in `src/domain/chordShapes.ts`; every voicing (including all 12 transpositions of each moveable shape) is verified against the chord detector in unit tests
 - **CAGED study section** (`app/(tabs)/study/caged.tsx`): four segments — Pentatonic boxes, full Scale positions, two-string 3rds, and two-string 6ths. Pentatonic and Scale segments show all five CAGED boxes up the neck with a Major/Minor toggle that relabels every dot's scale degree and root (same fingerings, relative-key framing: C major / A minor). Thirds harmonize one octave on each adjacent pair of the first four strings (e+B, B+G, G+D); sixths skip a string (e+G, B+D), with M/m interval quality labelled per pair. Domain data in `src/domain/cagedShapes.ts` (boxes as moveable fret offsets, degree labels derived from pitch classes, `buildDiatonicRun` generator); diagrams via `ScaleBoxDiagramView` (6-string box) and `IntervalRunView` (scrollable two-string run); musical correctness verified by unit tests
 
+- **Ear Training section** (new "Ear" bottom tab): section home (`app/(tabs)/ear/index.tsx`) with topic cards mirroring the Study framework — Interval Training live; Note Identification, Chord Identification, and Melodic Dictation as coming-soon cards. **Interval Training drill** (`app/(tabs)/ear/intervals.tsx`): hear two notes, name the interval; wrong answers retry with replay, correct answers reveal the full interval name + a reference-song hint (e.g. P5 → Star Wars) and auto-advance after 1.5s. Direction setting (ascending / descending / harmonic / mixed) and three difficulty levels (beginner 5 / intermediate 9 / advanced 12 intervals), both persisted. Audio is fully offline: Karplus-Strong plucked-string synthesis in pure TS (`src/services/toneSynth.ts`) renders each prompt to a 16-bit WAV cached via `expo-file-system` and played with `expo-audio` (`src/services/earAudio.ts`, plays in iPhone silent mode). Domain logic in `src/domain/earInterval.ts` (interval tables, prompt generation within the guitar register E2–E5, no immediate interval repeats); session flow in `src/store/useEarTraining.ts`; lifetime stats + settings in `statsStore.ts`. 40 new unit tests (interval domain, WAV synthesis incl. periodicity check, store flow, persistence). Note: adds native modules — requires a new EAS build, not just an OTA update
+
 ## Quality Bar
 
 - App launches with no network connection
@@ -88,6 +91,18 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - **CAGED chord-tone overlays** — extend the existing CAGED study section with per-shape chord-tone overlays: chord tones colored with scale tones of the same key faded in, connecting the five chord shapes into a continuous map.
 
 - **Interval recognition drill** — a new drill mode (Practice tab). Two fret positions are highlighted; the user names the interval (e.g. P5, M3, m7). Alternatively: given a root position, tap the fret that is a specified interval away. Covers all diatonic intervals; chromatic optional. New domain file `src/domain/interval.ts`; new drill screen `app/intervals.tsx`.
+
+### Goal 4 — Ear training expansion
+
+The Ear tab framework (section home with topic cards, offline tone synthesis in `src/services/toneSynth.ts`, playback in `src/services/earAudio.ts`) is built; these fill in the coming-soon cards. Each new drill should follow the Interval Training pattern: domain file → zustand store → screen, with stats and settings persisted in `statsStore.ts`.
+
+- **Note identification (ear)** — hear a single synthesized note, name it (A–G, chromatic optional). Builds a pitch reference anchored to the guitar register. Optionally show the answer's fretboard positions after a correct guess to tie ear to fretboard. New screen `app/(tabs)/ear/notes.tsx`; reuses `pluck()` + a single-note WAV renderer.
+
+- **Chord quality identification** — hear a strummed or block chord, name its quality (major, minor, dim, sus2, sus4, 7th qualities by level). Synthesis: mix 3–4 plucks with slight onset stagger to mimic a strum. Chord spellings can come from `src/domain/triad.ts` and `src/domain/chordDetect.ts` interval tables. New screen `app/(tabs)/ear/chords.tsx`.
+
+- **Melodic dictation** — hear a short 3–5 note phrase in a stated key, play it back by tapping fret positions (reuses `FretboardView` tap support from the Inverse Note Finder). Start with stepwise diatonic phrases; grade per-note with retry.
+
+- **Interval drill enhancements** — adaptive weighting of missed intervals (reuse the `WeightingStrategy` idea from `src/services/adaptiveEngine.ts`), per-interval accuracy breakdown, and an optional "play as fretboard positions" reveal connecting the heard interval to shapes on the neck.
 
 ### Goal 1 — Practice / remember what you know
 

@@ -30,12 +30,16 @@ eas update --branch production --message "..."  # OTA update to phone (seconds)
 src/
   domain/       pure TS types and logic, no RN deps
                   noteName.ts, guitarString.ts, fretPosition.ts,
-                  fretRange.ts, notePracticeMode.ts, quizPrompt.ts
-  services/     QuizEngine (pure functions), StatsStore (AsyncStorage)
-  store/        usePracticeSession.ts — Zustand store, single source of truth
+                  fretRange.ts, notePracticeMode.ts, quizPrompt.ts,
+                  earInterval.ts (ear-training intervals + prompt generation)
+  services/     QuizEngine (pure functions), StatsStore (AsyncStorage),
+                  ToneSynth (offline Karplus-Strong synth → WAV, pure),
+                  EarAudio (expo-audio playback of cached synthesized WAVs)
+  store/        Zustand stores, one per drill mode:
+                  usePracticeSession.ts, useSpeedGame.ts, useEarTraining.ts
   components/   FretboardView (SVG), AnswerGrid, StatsChips
 app/            Expo Router screens
-  index.tsx     Home screen — drill mode selection
+  (tabs)/       bottom tabs: Practice (index), Ear (ear training), Study
   drill.tsx     Note Finder drill loop
   settings.tsx  Settings: mode, fret range, recent misses
 __tests__/      Jest unit tests mirroring src/ structure

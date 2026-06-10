@@ -1,5 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NotePracticeMode, DEFAULT_PRACTICE_MODE } from '@/domain/notePracticeMode';
+import {
+  EarDirectionSetting, EarLevel,
+  DIRECTION_SETTINGS, EAR_LEVELS,
+  DEFAULT_EAR_DIRECTION, DEFAULT_EAR_LEVEL,
+} from '@/domain/earInterval';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import { NoteName } from '@/domain/noteName';
 import { FretPosition } from '@/domain/fretPosition';
@@ -13,6 +18,8 @@ const KEYS = {
   inverseLifetimeStats: 'inverseLifetimeStats',
   inverseMissedNotes: 'inverseMissedNotes',
   speedGameBestScore: 'speedGameBestScore',
+  earIntervalStats: 'earIntervalStats',
+  earTrainingSettings: 'earTrainingSettings',
 } as const;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -240,4 +247,88 @@ export async function recordSpeedGameScore(score: number): Promise<number> {
   const newBest = Math.max(best, score);
   await AsyncStorage.setItem(KEYS.speedGameBestScore, String(newBest));
   return newBest;
+}
+
+// ── Ear Training (interval drill) ──────────────────────────────────────────
+
+export interface EarLifetimeStats {
+  totalAnswers: number;
+  correctAnswers: number;
+  solvedPrompts: number;
+  firstTryCorrectAnswers: number;
+  bestStreak: number;
+}
+
+export const EMPTY_EAR_LIFETIME_STATS: EarLifetimeStats = {
+  totalAnswers: 0,
+  correctAnswers: 0,
+  solvedPrompts: 0,
+  firstTryCorrectAnswers: 0,
+  bestStreak: 0,
+};
+
+export interface EarTrainingSettings {
+  direction: EarDirectionSetting;
+  level: EarLevel;
+}
+
+export const DEFAULT_EAR_TRAINING_SETTINGS: EarTrainingSettings = {
+  direction: DEFAULT_EAR_DIRECTION,
+  level: DEFAULT_EAR_LEVEL,
+};
+
+export async function loadEarLifetimeStats(): Promise<EarLifetimeStats> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.earIntervalStats);
+    if (!raw) return EMPTY_EAR_LIFETIME_STATS;
+    const r = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      totalAnswers:           typeof r.totalAnswers === 'number'           ? r.totalAnswers           : 0,
+      correctAnswers:         typeof r.correctAnswers === 'number'         ? r.correctAnswers         : 0,
+      solvedPrompts:          typeof r.solvedPrompts === 'number'          ? r.solvedPrompts          : 0,
+      firstTryCorrectAnswers: typeof r.firstTryCorrectAnswers === 'number' ? r.firstTryCorrectAnswers : 0,
+      bestStreak:             typeof r.bestStreak === 'number'             ? r.bestStreak             : 0,
+    };
+  } catch {
+    return EMPTY_EAR_LIFETIME_STATS;
+  }
+}
+
+export async function recordEarIntervalAttempt(params: {
+  correct: boolean;
+  currentStreak: number;
+  isFirstTry: boolean;
+  isSolvedPrompt: boolean;
+}): Promise<void> {
+  const stats = await loadEarLifetimeStats();
+  const updated: EarLifetimeStats = {
+    totalAnswers:           stats.totalAnswers + 1,
+    correctAnswers:         params.correct ? stats.correctAnswers + 1 : stats.correctAnswers,
+    solvedPrompts:          params.isSolvedPrompt ? stats.solvedPrompts + 1 : stats.solvedPrompts,
+    firstTryCorrectAnswers: params.isFirstTry && params.correct ? stats.firstTryCorrectAnswers + 1 : stats.firstTryCorrectAnswers,
+    bestStreak:             Math.max(stats.bestStreak, params.currentStreak),
+  };
+  await AsyncStorage.setItem(KEYS.earIntervalStats, JSON.stringify(updated));
+}
+
+export async function loadEarTrainingSettings(): Promise<EarTrainingSettings> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.earTrainingSettings);
+    if (!raw) return DEFAULT_EAR_TRAINING_SETTINGS;
+    const r = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      direction: DIRECTION_SETTINGS.includes(r.direction as EarDirectionSetting)
+        ? (r.direction as EarDirectionSetting)
+        : DEFAULT_EAR_DIRECTION,
+      level: EAR_LEVELS.includes(r.level as EarLevel)
+        ? (r.level as EarLevel)
+        : DEFAULT_EAR_LEVEL,
+    };
+  } catch {
+    return DEFAULT_EAR_TRAINING_SETTINGS;
+  }
+}
+
+export async function saveEarTrainingSettings(settings: EarTrainingSettings): Promise<void> {
+  await AsyncStorage.setItem(KEYS.earTrainingSettings, JSON.stringify(settings));
 }

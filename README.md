@@ -29,6 +29,17 @@ as roadmap items are completed.
   including shell voicings (omitted 5th) and slash chords (C/E, D/F#) when
   the bass isn't the root.
 
+### Ear Training
+
+- **Interval Training**: hear two plucked notes and name the interval — from
+  minor 2nd to octave. Ascending, descending, harmonic, or mixed playback;
+  three difficulty levels (5, 9, or all 12 intervals); replay anytime. Each
+  correct answer shows a classic reference melody (Star Wars for a perfect
+  5th, Here Comes the Bride for a perfect 4th, …). Tones are synthesized
+  on-device with a Karplus-Strong plucked-string model, so it works fully
+  offline with no bundled samples. Note Identification, Chord Identification,
+  and Melodic Dictation are next up on the roadmap.
+
 ### Study
 
 - **Chord Shapes library**: classic chord charts for the open-position

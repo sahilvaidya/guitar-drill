@@ -11,7 +11,12 @@ import {
   recordCorrectAnswerDuration,
   loadSpeedGameBestScore,
   recordSpeedGameScore,
+  loadEarLifetimeStats,
+  recordEarIntervalAttempt,
+  loadEarTrainingSettings,
+  saveEarTrainingSettings,
   EMPTY_LIFETIME_STATS,
+  EMPTY_EAR_LIFETIME_STATS,
 } from '../../src/services/statsStore';
 
 const store: Record<string, string> = {};
@@ -152,5 +157,43 @@ describe('speedGameBestScore', () => {
   test('recovers from corrupt stored value', async () => {
     store['speedGameBestScore'] = 'not-a-number';
     expect(await loadSpeedGameBestScore()).toBe(0);
+  });
+});
+
+describe('earIntervalStats', () => {
+  test('returns empty stats when nothing stored', async () => {
+    expect(await loadEarLifetimeStats()).toEqual(EMPTY_EAR_LIFETIME_STATS);
+  });
+
+  test('recordEarIntervalAttempt increments counters', async () => {
+    await recordEarIntervalAttempt({ correct: true, currentStreak: 1, isFirstTry: true, isSolvedPrompt: true });
+    await recordEarIntervalAttempt({ correct: false, currentStreak: 0, isFirstTry: true, isSolvedPrompt: false });
+    const stats = await loadEarLifetimeStats();
+    expect(stats.totalAnswers).toBe(2);
+    expect(stats.correctAnswers).toBe(1);
+    expect(stats.firstTryCorrectAnswers).toBe(1);
+    expect(stats.solvedPrompts).toBe(1);
+    expect(stats.bestStreak).toBe(1);
+  });
+
+  test('recovers from corrupt stored value', async () => {
+    store['earIntervalStats'] = '{not json';
+    expect(await loadEarLifetimeStats()).toEqual(EMPTY_EAR_LIFETIME_STATS);
+  });
+});
+
+describe('earTrainingSettings', () => {
+  test('defaults to ascending / beginner', async () => {
+    expect(await loadEarTrainingSettings()).toEqual({ direction: 'ascending', level: 'beginner' });
+  });
+
+  test('persists custom settings', async () => {
+    await saveEarTrainingSettings({ direction: 'mixed', level: 'intermediate' });
+    expect(await loadEarTrainingSettings()).toEqual({ direction: 'mixed', level: 'intermediate' });
+  });
+
+  test('falls back to defaults for unrecognized stored values', async () => {
+    store['earTrainingSettings'] = JSON.stringify({ direction: 'sideways', level: 'expert' });
+    expect(await loadEarTrainingSettings()).toEqual({ direction: 'ascending', level: 'beginner' });
   });
 });

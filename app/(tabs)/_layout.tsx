@@ -23,6 +23,17 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="ear"
+        options={{
+          title: 'Ear',
+          // Nested stack inside the Ear tab handles its own header
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="ear" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
         name="study"
         options={{
           title: 'Study',
