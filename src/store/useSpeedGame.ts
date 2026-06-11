@@ -14,6 +14,7 @@ import {
   loadPracticeMode, loadFretRange,
   loadSpeedGameBestScoreForDifficulty, recordSpeedGameScoreForDifficulty,
   loadSpeedGameDifficulty, saveSpeedGameDifficulty,
+  loadSpeedGameOverride, saveSpeedGameOverride,
 } from '@/services/statsStore';
 
 export type SpeedGameStatus = 'idle' | 'playing' | 'gameOver';
@@ -21,6 +22,10 @@ export type SpeedGameStatus = 'idle' | 'playing' | 'gameOver';
 interface SpeedGameState {
   status: SpeedGameStatus;
   difficulty: SpeedDifficulty;
+  /** Effective time limit in seconds — may differ from the preset default. */
+  activeThreshold: number;
+  /** Effective wrong-tap penalty in seconds — may differ from the preset default. */
+  activePenalty: number;
   prompt: QuizPrompt | null;
   /** 3 shuffled display labels: the correct answer + 2 distractors. */
   choices: string[];
@@ -44,9 +49,11 @@ interface SpeedGameState {
 }
 
 interface SpeedGameActions {
-  /** Load persisted difficulty + best score without starting the game. */
+  /** Load persisted difficulty, overrides, and best score without starting the game. */
   init: () => Promise<void>;
   setDifficulty: (d: SpeedDifficulty) => Promise<void>;
+  updateThreshold: (v: number) => Promise<void>;
+  updatePenalty: (v: number) => Promise<void>;
   start: () => Promise<void>;
   answer: (choice: string) => Promise<void>;
   clearWrongFlash: () => void;
@@ -69,9 +76,13 @@ function buildChoices(
   return labels;
 }
 
+const { threshold: DEFAULT_THRESHOLD, wrongPenalty: DEFAULT_PENALTY } = DIFFICULTY_CONFIGS[DEFAULT_DIFFICULTY];
+
 export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get) => ({
   status: 'idle',
   difficulty: DEFAULT_DIFFICULTY,
+  activeThreshold: DEFAULT_THRESHOLD,
+  activePenalty: DEFAULT_PENALTY,
   prompt: null,
   choices: [],
   wrongFlash: null,
@@ -88,34 +99,60 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
   rng: Math.random,
 
   init: async () => {
-    const [difficulty, bestScore] = await Promise.all([
-      loadSpeedGameDifficulty(),
-      loadSpeedGameBestScoreForDifficulty(get().difficulty),
+    const difficulty = await loadSpeedGameDifficulty();
+    const [bestScore, override] = await Promise.all([
+      loadSpeedGameBestScoreForDifficulty(difficulty),
+      loadSpeedGameOverride(difficulty),
     ]);
-    const resolvedBest = await loadSpeedGameBestScoreForDifficulty(difficulty);
-    set({ difficulty, bestScore: resolvedBest, status: 'idle' });
+    const cfg = DIFFICULTY_CONFIGS[difficulty];
+    set({
+      difficulty,
+      bestScore,
+      activeThreshold: override?.threshold ?? cfg.threshold,
+      activePenalty: override?.wrongPenalty ?? cfg.wrongPenalty,
+      status: 'idle',
+    });
   },
 
   setDifficulty: async (difficulty: SpeedDifficulty) => {
     await saveSpeedGameDifficulty(difficulty);
-    const bestScore = await loadSpeedGameBestScoreForDifficulty(difficulty);
-    set({ difficulty, bestScore });
+    const [bestScore, override] = await Promise.all([
+      loadSpeedGameBestScoreForDifficulty(difficulty),
+      loadSpeedGameOverride(difficulty),
+    ]);
+    const cfg = DIFFICULTY_CONFIGS[difficulty];
+    set({
+      difficulty,
+      bestScore,
+      activeThreshold: override?.threshold ?? cfg.threshold,
+      activePenalty: override?.wrongPenalty ?? cfg.wrongPenalty,
+    });
+  },
+
+  updateThreshold: async (v: number) => {
+    const { difficulty, activePenalty } = get();
+    await saveSpeedGameOverride(difficulty, { threshold: v, wrongPenalty: activePenalty });
+    set({ activeThreshold: v });
+  },
+
+  updatePenalty: async (v: number) => {
+    const { difficulty, activeThreshold } = get();
+    await saveSpeedGameOverride(difficulty, { threshold: activeThreshold, wrongPenalty: v });
+    set({ activePenalty: v });
   },
 
   start: async () => {
-    const [mode, fretRange, difficulty] = await Promise.all([
-      loadPracticeMode(),
-      loadFretRange(),
-      loadSpeedGameDifficulty(),
-    ]);
+    const [mode, fretRange] = await Promise.all([loadPracticeMode(), loadFretRange()]);
+    const { difficulty, activeThreshold, activePenalty, now, rng } = get();
     const bestScore = await loadSpeedGameBestScoreForDifficulty(difficulty);
-    const { now, rng } = get();
     const config: QuizEngineConfig = { mode, fretRange };
     const accidentalDisplay: AccidentalDisplay = rng() < 0.5 ? 'sharp' : 'flat';
     const prompt = makeRandomPrompt(config);
     set({
       status: 'playing',
       difficulty,
+      activeThreshold,
+      activePenalty,
       prompt,
       choices: buildChoices(prompt, mode, accidentalDisplay, rng),
       wrongFlash: null,
@@ -135,7 +172,7 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
     const state = get();
     if (state.status !== 'playing' || !state.prompt) return;
 
-    const { threshold, wrongPenalty } = DIFFICULTY_CONFIGS[state.difficulty];
+    const { activeThreshold: threshold, activePenalty: wrongPenalty } = state;
     const correct = evaluate(normalizeToCanonical(choice), state.prompt);
     const elapsed = state.promptPresentedAt !== null
       ? (state.now() - state.promptPresentedAt) / 1000

@@ -13,6 +13,51 @@ import AnswerGrid from '@/components/AnswerGrid';
 import { StatChip, ChipRow } from '@/components/StatsChips';
 import ResponseTimeChart, { lineColorForAverage } from '@/components/ResponseTimeChart';
 
+function Stepper({
+  label, value, unit = 's', step = 1, min = 0, max = 120,
+  onChange,
+}: {
+  label: string; value: number; unit?: string; step?: number;
+  min?: number; max?: number; onChange: (v: number) => void;
+}) {
+  return (
+    <View style={stepperStyles.row}>
+      <Text style={stepperStyles.label}>{label}</Text>
+      <View style={stepperStyles.control}>
+        <Pressable
+          style={[stepperStyles.btn, value <= min && stepperStyles.btnDisabled]}
+          onPress={() => { if (value > min) onChange(value - step); }}
+          hitSlop={8}
+        >
+          <Text style={stepperStyles.btnText}>−</Text>
+        </Pressable>
+        <Text style={stepperStyles.value}>{value}{unit}</Text>
+        <Pressable
+          style={[stepperStyles.btn, value >= max && stepperStyles.btnDisabled]}
+          onPress={() => { if (value < max) onChange(value + step); }}
+          hitSlop={8}
+        >
+          <Text style={stepperStyles.btnText}>+</Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
+
+const stepperStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 4 },
+  label: { fontSize: 15, color: '#1C1C1E' },
+  control: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  btn: {
+    width: 32, height: 32, borderRadius: 8,
+    backgroundColor: '#F2F2F7',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  btnDisabled: { opacity: 0.3 },
+  btnText: { fontSize: 20, color: '#007AFF', lineHeight: 24 },
+  value: { width: 44, textAlign: 'center', fontSize: 15, fontWeight: '600', color: '#1C1C1E' },
+});
+
 const FRETBOARD_HEIGHT = 200;
 const WRONG_FLASH_MS = 600;
 
@@ -22,11 +67,13 @@ export default function SpeedGameScreen() {
   const contentWidth = width - 32;
 
   const {
-    status, difficulty, prompt, choices, wrongFlash, score, times,
-    bestScore, isNewBest, init, setDifficulty, start, answer, clearWrongFlash,
+    status, difficulty, activeThreshold, activePenalty,
+    prompt, choices, wrongFlash, score, times,
+    bestScore, isNewBest,
+    init, setDifficulty, updateThreshold, updatePenalty, start, answer, clearWrongFlash,
   } = useSpeedGame();
 
-  const { threshold } = DIFFICULTY_CONFIGS[difficulty];
+  const threshold = activeThreshold;
 
   useEffect(() => {
     init();
@@ -70,15 +117,31 @@ export default function SpeedGameScreen() {
                         {cfg.label}
                       </Text>
                       <Text style={[styles.difficultyBtnDetail, selected && styles.difficultyBtnDetailSelected]}>
-                        {cfg.threshold}s limit
-                      </Text>
-                      <Text style={[styles.difficultyBtnDetail, selected && styles.difficultyBtnDetailSelected]}>
-                        +{cfg.wrongPenalty}s wrong
+                        {cfg.threshold}s / +{cfg.wrongPenalty}s
                       </Text>
                     </Pressable>
                   );
                 })}
               </View>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionLabel}>Tune the numbers</Text>
+              <Stepper
+                label="Time limit"
+                value={activeThreshold}
+                min={1}
+                max={120}
+                onChange={updateThreshold}
+              />
+              <View style={styles.divider} />
+              <Stepper
+                label="Wrong-tap penalty"
+                value={activePenalty}
+                min={0}
+                max={30}
+                onChange={updatePenalty}
+              />
             </View>
 
             {bestScore > 0 && (
@@ -243,6 +306,7 @@ const styles = StyleSheet.create({
   difficultyBtnLabelSelected: { color: '#007AFF' },
   difficultyBtnDetail: { fontSize: 11, color: '#8E8E93' },
   difficultyBtnDetailSelected: { color: '#007AFF' },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: '#E5E5EA', marginVertical: 4 },
   idleBestScore: { fontSize: 40, fontWeight: '800', color: '#007AFF', textAlign: 'center' },
 
   // Game over

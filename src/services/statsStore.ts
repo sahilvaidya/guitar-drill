@@ -290,6 +290,29 @@ export async function saveSpeedGameDifficulty(difficulty: SpeedDifficulty): Prom
   await AsyncStorage.setItem(KEYS.speedGameDifficulty, difficulty);
 }
 
+export interface SpeedGameOverride {
+  threshold: number;
+  wrongPenalty: number;
+}
+
+export async function loadSpeedGameOverride(difficulty: SpeedDifficulty): Promise<SpeedGameOverride | null> {
+  try {
+    const raw = await AsyncStorage.getItem(`speedGameOverride_${difficulty}`);
+    if (!raw) return null;
+    const p = JSON.parse(raw);
+    if (typeof p.threshold === 'number' && typeof p.wrongPenalty === 'number') {
+      return { threshold: p.threshold, wrongPenalty: p.wrongPenalty };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function saveSpeedGameOverride(difficulty: SpeedDifficulty, override: SpeedGameOverride): Promise<void> {
+  await AsyncStorage.setItem(`speedGameOverride_${difficulty}`, JSON.stringify(override));
+}
+
 // ── Ear Training (interval drill) ──────────────────────────────────────────
 
 export interface EarLifetimeStats {
