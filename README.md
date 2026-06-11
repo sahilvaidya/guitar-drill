@@ -37,8 +37,13 @@ as roadmap items are completed.
   correct answer shows a classic reference melody (Star Wars for a perfect
   5th, Here Comes the Bride for a perfect 4th, …). Tones are synthesized
   on-device with a Karplus-Strong plucked-string model, so it works fully
-  offline with no bundled samples. Note Identification, Chord Identification,
-  and Melodic Dictation are next up on the roadmap.
+  offline with no bundled samples.
+- **Note Identification**: hear a single plucked note and name it — A through
+  G in natural mode, or all 12 pitch classes in chromatic mode. Range is C3
+  to C5 (the guitar's middle register). Each correct answer plays the note
+  again for confirmation before auto-advancing. Replay anytime before
+  answering. Chord Identification and Melodic Dictation are next up on the
+  roadmap.
 
 ### Study
 

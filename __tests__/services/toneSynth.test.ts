@@ -6,6 +6,8 @@ import {
   midiToFrequency,
   pluck,
   renderIntervalTone,
+  renderNoteTone,
+  renderNoteWav,
   encodeWavPcm16,
   renderIntervalWav,
   keepAliveTone,
@@ -175,6 +177,50 @@ describe('renderIntervalWav', () => {
       Math.round(LEAD_IN_SECONDS * SAMPLE_RATE) +
       2 * Math.round(TONE_SECONDS * SAMPLE_RATE) +
       Math.round(MELODIC_GAP_SECONDS * SAMPLE_RATE);
+    expect(wav.length).toBe(44 + expectedSamples * 2);
+  });
+});
+
+describe('renderNoteTone', () => {
+  it('has LEAD_IN_SECONDS of silence followed by a pluck', () => {
+    const audio = renderNoteTone(60);
+    const leadLen = Math.round(LEAD_IN_SECONDS * SAMPLE_RATE);
+    const toneLen = Math.round(TONE_SECONDS * SAMPLE_RATE);
+    expect(audio.length).toBe(leadLen + toneLen);
+    // lead-in is silent
+    expect(rms(audio, 0, leadLen)).toBe(0);
+    // note body has energy
+    expect(rms(audio, leadLen, audio.length)).toBeGreaterThan(0.05);
+  });
+
+  it('is deterministic for the same midi number', () => {
+    expect(renderNoteTone(60)).toEqual(renderNoteTone(60));
+  });
+
+  it('produces different audio for different pitches', () => {
+    const a = renderNoteTone(48);
+    const b = renderNoteTone(72);
+    let diff = false;
+    for (let i = 0; i < a.length; i++) {
+      if (a[i] !== b[i]) { diff = true; break; }
+    }
+    expect(diff).toBe(true);
+  });
+});
+
+describe('renderNoteWav', () => {
+  it('produces a valid WAV header', () => {
+    const wav = renderNoteWav(60);
+    expect(ascii(wav, 0, 4)).toBe('RIFF');
+    expect(ascii(wav, 8, 4)).toBe('WAVE');
+    expect(ascii(wav, 36, 4)).toBe('data');
+  });
+
+  it('has the expected total length (header + lead-in + tone)', () => {
+    const wav = renderNoteWav(60);
+    const expectedSamples =
+      Math.round(LEAD_IN_SECONDS * SAMPLE_RATE) +
+      Math.round(TONE_SECONDS * SAMPLE_RATE);
     expect(wav.length).toBe(44 + expectedSamples * 2);
   });
 });
