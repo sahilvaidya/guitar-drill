@@ -8,6 +8,7 @@ import {
   renderIntervalTone,
   encodeWavPcm16,
   renderIntervalWav,
+  keepAliveTone,
 } from '@/services/toneSynth';
 import { EarIntervalPrompt } from '@/domain/earInterval';
 
@@ -143,6 +144,25 @@ describe('encodeWavPcm16', () => {
     const view = new DataView(wav.buffer);
     expect(view.getInt16(44, true)).toBe(0x7fff);
     expect(view.getInt16(46, true)).toBe(-0x7fff);
+  });
+});
+
+describe('keepAliveTone', () => {
+  it('is non-silent but far below audibility', () => {
+    const tone = keepAliveTone();
+    let peak = 0;
+    for (const s of tone) peak = Math.max(peak, Math.abs(s));
+    expect(peak).toBeGreaterThan(0.001); // real signal, not digital silence
+    expect(peak).toBeLessThan(0.01);     // ≈ -48 dB, inaudible
+  });
+
+  it('loops without a phase discontinuity', () => {
+    const tone = keepAliveTone();
+    expect(tone.length).toBe(SAMPLE_RATE); // 1s loop
+    // 45 Hz divides 22050 evenly, so wrapping from the last sample back to
+    // the first continues the sine exactly one sample apart.
+    expect(tone[0]).toBeCloseTo(0, 6);
+    expect(tone[tone.length - 1]).toBeCloseTo(-tone[1], 6);
   });
 });
 

@@ -128,3 +128,21 @@ export function encodeWavPcm16(
 export function renderIntervalWav(prompt: EarIntervalPrompt): Uint8Array {
   return encodeWavPcm16(renderIntervalTone(prompt));
 }
+
+/**
+ * One second of a sub-audible keep-alive signal. Speaker and Bluetooth
+ * amplifiers power-gate on digital silence and swallow the attack of the
+ * next sound while waking, so the keep-alive loop must carry a real signal:
+ * a 45 Hz sine at -48 dB is below what phone speakers can reproduce and far
+ * below audibility, but keeps the output stage awake. 45 Hz divides the
+ * sample rate evenly, so the loop point is phase-continuous (no click).
+ */
+export function keepAliveTone(sampleRate: number = SAMPLE_RATE): Float32Array {
+  const out = new Float32Array(sampleRate);
+  const freq = 45;
+  const amplitude = 0.004;
+  for (let i = 0; i < out.length; i++) {
+    out[i] = amplitude * Math.sin((2 * Math.PI * freq * i) / sampleRate);
+  }
+  return out;
+}

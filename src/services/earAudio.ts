@@ -6,15 +6,14 @@
 import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { EarIntervalPrompt } from '@/domain/earInterval';
-import { SAMPLE_RATE, encodeWavPcm16, renderIntervalWav } from './toneSynth';
+import { encodeWavPcm16, keepAliveTone, renderIntervalWav } from './toneSynth';
 
 let player: AudioPlayer | null = null;
-let loadedUri: string | null = null;
 let keepAlivePlayer: AudioPlayer | null = null;
 let audioModeReady = false;
 
 // Bump when the rendered audio format changes so stale cached WAVs are bypassed.
-const SYNTH_VERSION = 2;
+const SYNTH_VERSION = 3;
 
 function promptFileName(prompt: EarIntervalPrompt): string {
   return `ear-v${SYNTH_VERSION}-${prompt.rootMidi}-${prompt.interval}-${prompt.direction}.wav`;
@@ -37,22 +36,22 @@ async function ensureAudioMode(): Promise<void> {
 }
 
 /**
- * Loops a silent buffer at zero volume while the drill screen is open. iOS
- * powers the audio output down after a few seconds of silence and swallows
- * the start of whatever plays next; keeping the pipeline rendering means
- * prompt playback always starts instantly and unclipped.
+ * Loops a sub-audible tone while the drill screen is open. Speaker and
+ * Bluetooth output stages power down on digital silence (zero-volume or
+ * silent buffers don't hold them awake) and clip the attack of the next
+ * sound while waking back up; an inaudible non-silent signal keeps them
+ * rendering so prompt playback always starts intact.
  */
 export async function startAudioKeepAlive(): Promise<void> {
   if (keepAlivePlayer) return;
   await ensureAudioMode();
-  const file = new File(Paths.cache, `ear-v${SYNTH_VERSION}-silence.wav`);
+  const file = new File(Paths.cache, `ear-v${SYNTH_VERSION}-keepalive.wav`);
   if (!file.exists) {
     file.create();
-    file.write(encodeWavPcm16(new Float32Array(SAMPLE_RATE))); // 1s of silence
+    file.write(encodeWavPcm16(keepAliveTone()));
   }
   keepAlivePlayer = createAudioPlayer({ uri: file.uri });
   keepAlivePlayer.loop = true;
-  keepAlivePlayer.volume = 0;
   keepAlivePlayer.play();
 }
 
@@ -60,18 +59,12 @@ export async function playIntervalPrompt(prompt: EarIntervalPrompt): Promise<voi
   await ensureAudioMode();
   const file = ensureCachedWav(prompt);
 
-  // Reuse a single player: restarting it from the top means repeated Replay
-  // taps can never layer multiple copies of the audio over each other.
-  if (player && loadedUri === file.uri) {
-    await player.seekTo(0);
-    player.play();
-    return;
-  }
-
+  // Recreate the player per play: pausing the old one first prevents replays
+  // from layering, and a fresh player always starts at sample zero (seekTo on
+  // iOS is tolerance-based and not guaranteed to land exactly at the start).
   player?.pause();
   player?.remove();
   player = createAudioPlayer({ uri: file.uri });
-  loadedUri = file.uri;
   player.play();
 }
 
@@ -79,7 +72,6 @@ export function stopIntervalAudio(): void {
   player?.pause();
   player?.remove();
   player = null;
-  loadedUri = null;
   keepAlivePlayer?.pause();
   keepAlivePlayer?.remove();
   keepAlivePlayer = null;
