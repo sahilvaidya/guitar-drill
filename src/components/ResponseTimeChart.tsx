@@ -29,9 +29,9 @@ function lerpColor(a: string, b: string, t: number): string {
 }
 
 /** Green when comfortably fast, shifting through amber to red near the threshold. */
-export function lineColorForAverage(avg: number | null): string {
+export function lineColorForAverage(avg: number | null, threshold = THRESHOLD_SECONDS): string {
   if (avg === null) return GREEN;
-  const t = Math.min(Math.max(avg / THRESHOLD_SECONDS, 0), 1);
+  const t = Math.min(Math.max(avg / threshold, 0), 1);
   return t < 0.6 ? lerpColor(GREEN, AMBER, t / 0.6) : lerpColor(AMBER, RED, (t - 0.6) / 0.4);
 }
 
@@ -40,9 +40,11 @@ interface Props {
   times: number[];
   width: number;
   height?: number;
+  /** The game-over threshold for this run. Defaults to the normal-difficulty threshold. */
+  threshold?: number;
 }
 
-export default function ResponseTimeChart({ times, width, height = 120 }: Props) {
+export default function ResponseTimeChart({ times, width, height = 120, threshold = THRESHOLD_SECONDS }: Props) {
   const plotW = width - PAD_L - PAD_R;
   const plotH = height - PAD_T - PAD_B;
 
@@ -56,15 +58,15 @@ export default function ResponseTimeChart({ times, width, height = 120 }: Props)
 
   const visible = times.slice(-MAX_VISIBLE_POINTS);
   const firstPromptNumber = times.length - visible.length + 1;
-  const yMax = Math.max(THRESHOLD_SECONDS * 1.6, ...visible) + 0.5;
-  const color = lineColorForAverage(rollingAverage(times));
+  const yMax = Math.max(threshold * 1.6, ...visible) + 0.5;
+  const color = lineColorForAverage(rollingAverage(times), threshold);
 
   const xFor = (i: number) =>
     visible.length === 1 ? PAD_L + plotW / 2 : PAD_L + (i / (visible.length - 1)) * plotW;
   const yFor = (v: number) => PAD_T + (1 - v / yMax) * plotH;
 
   const points = visible.map((v, i) => `${xFor(i)},${yFor(v)}`).join(' ');
-  const thresholdY = yFor(THRESHOLD_SECONDS);
+  const thresholdY = yFor(threshold);
 
   return (
     <Svg width={width} height={height}>
@@ -93,7 +95,7 @@ export default function ResponseTimeChart({ times, width, height = 120 }: Props)
         x={PAD_L - 5} y={thresholdY + 3}
         fontSize={9} fontWeight="600" fill={RED} textAnchor="end"
       >
-        {THRESHOLD_SECONDS}s
+        {threshold}s
       </SvgText>
 
       {/* Response time line */}
@@ -105,7 +107,7 @@ export default function ResponseTimeChart({ times, width, height = 120 }: Props)
           key={i}
           cx={xFor(i)} cy={yFor(v)}
           r={i === visible.length - 1 ? 4 : 2.5}
-          fill={v > THRESHOLD_SECONDS ? RED : color}
+          fill={v > threshold ? RED : color}
         />
       ))}
 

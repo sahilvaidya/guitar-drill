@@ -6,18 +6,21 @@ import {
   AccidentalDisplay, displayNoteForAccidental, normalizeToCanonical,
 } from '@/domain/noteName';
 import {
-  WRONG_TAP_PENALTY_SECONDS, isGameOver,
+  SpeedDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_CONFIGS, isGameOver,
 } from '@/domain/speedGame';
 import { pickDistractors } from '@/domain/speedGameDistractors';
 import { evaluate, makeRandomPrompt, QuizEngineConfig } from '@/services/quizEngine';
 import {
-  loadPracticeMode, loadFretRange, loadSpeedGameBestScore, recordSpeedGameScore,
+  loadPracticeMode, loadFretRange,
+  loadSpeedGameBestScoreForDifficulty, recordSpeedGameScoreForDifficulty,
+  loadSpeedGameDifficulty, saveSpeedGameDifficulty,
 } from '@/services/statsStore';
 
 export type SpeedGameStatus = 'idle' | 'playing' | 'gameOver';
 
 interface SpeedGameState {
   status: SpeedGameStatus;
+  difficulty: SpeedDifficulty;
   prompt: QuizPrompt | null;
   /** 3 shuffled display labels: the correct answer + 2 distractors. */
   choices: string[];
@@ -41,6 +44,9 @@ interface SpeedGameState {
 }
 
 interface SpeedGameActions {
+  /** Load persisted difficulty + best score without starting the game. */
+  init: () => Promise<void>;
+  setDifficulty: (d: SpeedDifficulty) => Promise<void>;
   start: () => Promise<void>;
   answer: (choice: string) => Promise<void>;
   clearWrongFlash: () => void;
@@ -65,6 +71,7 @@ function buildChoices(
 
 export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get) => ({
   status: 'idle',
+  difficulty: DEFAULT_DIFFICULTY,
   prompt: null,
   choices: [],
   wrongFlash: null,
@@ -80,18 +87,35 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
   now: () => Date.now(),
   rng: Math.random,
 
+  init: async () => {
+    const [difficulty, bestScore] = await Promise.all([
+      loadSpeedGameDifficulty(),
+      loadSpeedGameBestScoreForDifficulty(get().difficulty),
+    ]);
+    const resolvedBest = await loadSpeedGameBestScoreForDifficulty(difficulty);
+    set({ difficulty, bestScore: resolvedBest, status: 'idle' });
+  },
+
+  setDifficulty: async (difficulty: SpeedDifficulty) => {
+    await saveSpeedGameDifficulty(difficulty);
+    const bestScore = await loadSpeedGameBestScoreForDifficulty(difficulty);
+    set({ difficulty, bestScore });
+  },
+
   start: async () => {
-    const [mode, fretRange, bestScore] = await Promise.all([
+    const [mode, fretRange, difficulty] = await Promise.all([
       loadPracticeMode(),
       loadFretRange(),
-      loadSpeedGameBestScore(),
+      loadSpeedGameDifficulty(),
     ]);
+    const bestScore = await loadSpeedGameBestScoreForDifficulty(difficulty);
     const { now, rng } = get();
     const config: QuizEngineConfig = { mode, fretRange };
     const accidentalDisplay: AccidentalDisplay = rng() < 0.5 ? 'sharp' : 'flat';
     const prompt = makeRandomPrompt(config);
     set({
       status: 'playing',
+      difficulty,
       prompt,
       choices: buildChoices(prompt, mode, accidentalDisplay, rng),
       wrongFlash: null,
@@ -111,18 +135,17 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
     const state = get();
     if (state.status !== 'playing' || !state.prompt) return;
 
+    const { threshold, wrongPenalty } = DIFFICULTY_CONFIGS[state.difficulty];
     const correct = evaluate(normalizeToCanonical(choice), state.prompt);
     const elapsed = state.promptPresentedAt !== null
       ? (state.now() - state.promptPresentedAt) / 1000
       : 0;
 
     if (!correct) {
-      const currentPenalty = state.currentPenalty + WRONG_TAP_PENALTY_SECONDS;
-      // The penalty counts against the rolling average right away: treat the
-      // in-progress prompt as if it were completed now.
+      const currentPenalty = state.currentPenalty + wrongPenalty;
       const provisional = [...state.times, elapsed + currentPenalty];
-      if (isGameOver(provisional)) {
-        const bestScore = await recordSpeedGameScore(state.score);
+      if (isGameOver(provisional, threshold)) {
+        const bestScore = await recordSpeedGameScoreForDifficulty(state.difficulty, state.score);
         set({
           status: 'gameOver',
           times: provisional,
@@ -140,8 +163,8 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
     const times = [...state.times, elapsed + state.currentPenalty];
     const score = state.score + 1;
 
-    if (isGameOver(times)) {
-      const bestScore = await recordSpeedGameScore(score);
+    if (isGameOver(times, threshold)) {
+      const bestScore = await recordSpeedGameScoreForDifficulty(state.difficulty, score);
       set({
         status: 'gameOver',
         times,

@@ -73,7 +73,7 @@ describe('useSpeedGame', () => {
     expect(s.promptPresentedAt).toBe(t);
   });
 
-  it('wrong tap adds a 6s penalty and the prompt retries', async () => {
+  it('wrong tap adds a 2s penalty on normal difficulty and the prompt retries', async () => {
     await state().start();
     // Build a buffer of fast answers so the penalty is survivable
     for (let i = 0; i < 4; i++) await answerCorrectAfter(1);
@@ -83,7 +83,7 @@ describe('useSpeedGame', () => {
     await state().answer(wrong);
     let s = state();
     expect(s.status).toBe('playing');
-    expect(s.currentPenalty).toBe(6);
+    expect(s.currentPenalty).toBe(2);
     expect(s.wrongFlash).toBe(wrong);
     expect(s.score).toBe(4);
 
@@ -93,12 +93,12 @@ describe('useSpeedGame', () => {
     s = state();
     expect(s.status).toBe('playing');
     expect(s.score).toBe(5);
-    expect(s.times[4]).toBeCloseTo(1 + 6); // 1s elapsed + 6s penalty
+    expect(s.times[4]).toBeCloseTo(1 + 2); // 1s elapsed + 2s penalty
     expect(s.currentPenalty).toBe(0);
     expect(s.wrongFlash).toBeNull();
   });
 
-  it('game over fires when the rolling average exceeds 5s', async () => {
+  it('game over fires when the rolling average exceeds 5s on normal difficulty', async () => {
     await state().start();
     await answerCorrectAfter(26);
     const s = state();
@@ -108,8 +108,10 @@ describe('useSpeedGame', () => {
     expect(await loadSpeedGameBestScore()).toBe(1);
   });
 
-  it('a wrong tap with no fast-answer buffer ends the game immediately', async () => {
+  it('wrong tap on a slow prompt ends the game on normal difficulty', async () => {
     await state().start();
+    // 4s elapsed + 2s penalty = 6s > 5s threshold → game over
+    t += 4000;
     await state().answer(wrongChoice());
     const s = state();
     expect(s.status).toBe('gameOver');

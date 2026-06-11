@@ -5,7 +5,9 @@ import {
 } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { useSpeedGame } from '@/store/useSpeedGame';
-import { THRESHOLD_SECONDS, rollingAverage } from '@/domain/speedGame';
+import {
+  DIFFICULTIES, DIFFICULTY_CONFIGS, SpeedDifficulty, rollingAverage,
+} from '@/domain/speedGame';
 import FretboardView from '@/components/FretboardView';
 import AnswerGrid from '@/components/AnswerGrid';
 import { StatChip, ChipRow } from '@/components/StatsChips';
@@ -20,12 +22,14 @@ export default function SpeedGameScreen() {
   const contentWidth = width - 32;
 
   const {
-    status, prompt, choices, wrongFlash, score, times,
-    bestScore, isNewBest, start, answer, clearWrongFlash,
+    status, difficulty, prompt, choices, wrongFlash, score, times,
+    bestScore, isNewBest, init, setDifficulty, start, answer, clearWrongFlash,
   } = useSpeedGame();
 
+  const { threshold } = DIFFICULTY_CONFIGS[difficulty];
+
   useEffect(() => {
-    start();
+    init();
   }, []);
 
   useEffect(() => {
@@ -36,6 +40,63 @@ export default function SpeedGameScreen() {
 
   const avg = rollingAverage(times);
 
+  if (status === 'idle') {
+    return (
+      <>
+        <Stack.Screen options={{ title: 'Speed Game', headerBackTitle: 'Back' }} />
+        <SafeAreaView style={styles.container}>
+          <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+            <View style={[styles.card, styles.idleCard]}>
+              <Text style={styles.idleTitle}>Speed Game</Text>
+              <Text style={styles.idleSubtitle}>
+                Keep your rolling average below the time limit.{'\n'}
+                Wrong answers add penalty seconds.
+              </Text>
+            </View>
+
+            <View style={styles.card}>
+              <Text style={styles.sectionLabel}>Difficulty</Text>
+              <View style={styles.difficultyRow}>
+                {DIFFICULTIES.map((d: SpeedDifficulty) => {
+                  const cfg = DIFFICULTY_CONFIGS[d];
+                  const selected = d === difficulty;
+                  return (
+                    <Pressable
+                      key={d}
+                      style={[styles.difficultyBtn, selected && styles.difficultyBtnSelected]}
+                      onPress={() => setDifficulty(d)}
+                    >
+                      <Text style={[styles.difficultyBtnLabel, selected && styles.difficultyBtnLabelSelected]}>
+                        {cfg.label}
+                      </Text>
+                      <Text style={[styles.difficultyBtnDetail, selected && styles.difficultyBtnDetailSelected]}>
+                        {cfg.threshold}s limit
+                      </Text>
+                      <Text style={[styles.difficultyBtnDetail, selected && styles.difficultyBtnDetailSelected]}>
+                        +{cfg.wrongPenalty}s wrong
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            {bestScore > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionLabel}>Personal best — {DIFFICULTY_CONFIGS[difficulty].label}</Text>
+                <Text style={styles.idleBestScore}>{bestScore}</Text>
+              </View>
+            )}
+
+            <Pressable style={styles.primaryButton} onPress={() => start()}>
+              <Text style={styles.primaryButtonText}>Start</Text>
+            </Pressable>
+          </ScrollView>
+        </SafeAreaView>
+      </>
+    );
+  }
+
   if (status === 'gameOver') {
     return (
       <>
@@ -45,7 +106,7 @@ export default function SpeedGameScreen() {
             <View style={[styles.card, styles.gameOverCard]}>
               <Text style={styles.gameOverTitle}>Game Over</Text>
               <Text style={styles.gameOverReason}>
-                Average response time exceeded {THRESHOLD_SECONDS}s
+                Average response time exceeded {threshold}s
               </Text>
               <Text style={styles.finalScore}>{score}</Text>
               <Text style={styles.finalScoreLabel}>
@@ -62,7 +123,7 @@ export default function SpeedGameScreen() {
 
             <View style={styles.card}>
               <Text style={styles.chartTitle}>This run</Text>
-              <ResponseTimeChart times={times} width={contentWidth - 32} />
+              <ResponseTimeChart times={times} width={contentWidth - 32} threshold={threshold} />
             </View>
 
             <Pressable style={styles.primaryButton} onPress={() => start()}>
@@ -101,9 +162,9 @@ export default function SpeedGameScreen() {
             <StatChip label="Score" value={score} />
             <StatChip label="Best" value={bestScore} />
             <StatChip
-              label={`Avg (${THRESHOLD_SECONDS}s limit)`}
+              label={`Avg (${threshold}s limit)`}
               value={avg === null ? '—' : `${avg.toFixed(1)}s`}
-              valueColor={avg === null ? undefined : lineColorForAverage(avg)}
+              valueColor={avg === null ? undefined : lineColorForAverage(avg, threshold)}
             />
           </ChipRow>
 
@@ -119,7 +180,7 @@ export default function SpeedGameScreen() {
           />
 
           <View style={styles.card}>
-            <ResponseTimeChart times={times} width={contentWidth - 32} />
+            <ResponseTimeChart times={times} width={contentWidth - 32} threshold={threshold} />
           </View>
 
           <AnswerGrid
@@ -157,6 +218,32 @@ const styles = StyleSheet.create({
   promptInstruction: { fontSize: 13, color: '#8E8E93', marginBottom: 4 },
   promptPosition: { fontSize: 20, fontWeight: '700', color: '#1C1C1E' },
   chartTitle: { fontSize: 13, fontWeight: '600', color: '#8E8E93', marginBottom: 8 },
+
+  // Idle screen
+  idleCard: { alignItems: 'center', paddingVertical: 24 },
+  idleTitle: { fontSize: 24, fontWeight: '800', color: '#1C1C1E' },
+  idleSubtitle: { fontSize: 14, color: '#8E8E93', marginTop: 8, textAlign: 'center', lineHeight: 20 },
+  sectionLabel: { fontSize: 13, fontWeight: '600', color: '#8E8E93', marginBottom: 10 },
+  difficultyRow: { flexDirection: 'row', gap: 8 },
+  difficultyBtn: {
+    flex: 1,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E5E5EA',
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    alignItems: 'center',
+    gap: 2,
+  },
+  difficultyBtnSelected: {
+    borderColor: '#007AFF',
+    backgroundColor: '#007AFF0D',
+  },
+  difficultyBtnLabel: { fontSize: 15, fontWeight: '700', color: '#1C1C1E' },
+  difficultyBtnLabelSelected: { color: '#007AFF' },
+  difficultyBtnDetail: { fontSize: 11, color: '#8E8E93' },
+  difficultyBtnDetailSelected: { color: '#007AFF' },
+  idleBestScore: { fontSize: 40, fontWeight: '800', color: '#007AFF', textAlign: 'center' },
 
   // Game over
   gameOverCard: { alignItems: 'center', paddingVertical: 28 },

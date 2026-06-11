@@ -8,6 +8,7 @@ import {
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import { NoteName } from '@/domain/noteName';
 import { FretPosition } from '@/domain/fretPosition';
+import { SpeedDifficulty, DEFAULT_DIFFICULTY } from '@/domain/speedGame';
 
 const KEYS = {
   lifetimeStats: 'lifetimeStats',
@@ -18,6 +19,9 @@ const KEYS = {
   inverseLifetimeStats: 'inverseLifetimeStats',
   inverseMissedNotes: 'inverseMissedNotes',
   speedGameBestScore: 'speedGameBestScore',
+  speedGameBestScoreEasy: 'speedGameBestScore_easy',
+  speedGameBestScoreHard: 'speedGameBestScore_hard',
+  speedGameDifficulty: 'speedGameDifficulty',
   earIntervalStats: 'earIntervalStats',
   earTrainingSettings: 'earTrainingSettings',
 } as const;
@@ -247,6 +251,43 @@ export async function recordSpeedGameScore(score: number): Promise<number> {
   const newBest = Math.max(best, score);
   await AsyncStorage.setItem(KEYS.speedGameBestScore, String(newBest));
   return newBest;
+}
+
+const DIFFICULTY_BEST_KEY: Record<SpeedDifficulty, string> = {
+  easy:   KEYS.speedGameBestScoreEasy,
+  normal: KEYS.speedGameBestScore,
+  hard:   KEYS.speedGameBestScoreHard,
+};
+
+export async function loadSpeedGameBestScoreForDifficulty(difficulty: SpeedDifficulty): Promise<number> {
+  try {
+    const raw = await AsyncStorage.getItem(DIFFICULTY_BEST_KEY[difficulty]);
+    const parsed = raw === null ? NaN : Number(raw);
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function recordSpeedGameScoreForDifficulty(difficulty: SpeedDifficulty, score: number): Promise<number> {
+  const best = await loadSpeedGameBestScoreForDifficulty(difficulty);
+  const newBest = Math.max(best, score);
+  await AsyncStorage.setItem(DIFFICULTY_BEST_KEY[difficulty], String(newBest));
+  return newBest;
+}
+
+export async function loadSpeedGameDifficulty(): Promise<SpeedDifficulty> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.speedGameDifficulty);
+    if (raw === 'easy' || raw === 'normal' || raw === 'hard') return raw;
+    return DEFAULT_DIFFICULTY;
+  } catch {
+    return DEFAULT_DIFFICULTY;
+  }
+}
+
+export async function saveSpeedGameDifficulty(difficulty: SpeedDifficulty): Promise<void> {
+  await AsyncStorage.setItem(KEYS.speedGameDifficulty, difficulty);
 }
 
 // ── Ear Training (interval drill) ──────────────────────────────────────────
