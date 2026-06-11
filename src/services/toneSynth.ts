@@ -129,6 +129,19 @@ export function renderIntervalWav(prompt: EarIntervalPrompt): Uint8Array {
   return encodeWavPcm16(renderIntervalTone(prompt));
 }
 
+/** Renders the audio for a single-note prompt: LEAD_IN_SECONDS of silence + one pluck. */
+export function renderNoteTone(midi: number): Float32Array {
+  const tone = pluck(midiToFrequency(midi));
+  const leadIn = Math.round(LEAD_IN_SECONDS * SAMPLE_RATE);
+  const out = new Float32Array(leadIn + tone.length);
+  out.set(tone, leadIn);
+  return out;
+}
+
+export function renderNoteWav(midi: number): Uint8Array {
+  return encodeWavPcm16(renderNoteTone(midi));
+}
+
 /**
  * One second of a sub-audible keep-alive signal. Speaker and Bluetooth
  * amplifiers power-gate on digital silence and swallow the attack of the

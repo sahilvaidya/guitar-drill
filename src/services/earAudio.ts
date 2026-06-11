@@ -6,7 +6,7 @@
 import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
 import { File, Paths } from 'expo-file-system';
 import { EarIntervalPrompt } from '@/domain/earInterval';
-import { encodeWavPcm16, keepAliveTone, renderIntervalWav } from './toneSynth';
+import { encodeWavPcm16, keepAliveTone, renderIntervalWav, renderNoteWav } from './toneSynth';
 
 let player: AudioPlayer | null = null;
 let keepAlivePlayer: AudioPlayer | null = null;
@@ -62,6 +62,21 @@ export async function playIntervalPrompt(prompt: EarIntervalPrompt): Promise<voi
   // Recreate the player per play: pausing the old one first prevents replays
   // from layering, and a fresh player always starts at sample zero (seekTo on
   // iOS is tolerance-based and not guaranteed to land exactly at the start).
+  player?.pause();
+  player?.remove();
+  player = createAudioPlayer({ uri: file.uri });
+  player.play();
+}
+
+export async function playNotePrompt(midi: number): Promise<void> {
+  await ensureAudioMode();
+  const fileName = `ear-note-v${SYNTH_VERSION}-${midi}.wav`;
+  const file = new File(Paths.cache, fileName);
+  if (!file.exists) {
+    file.create();
+    file.write(renderNoteWav(midi));
+  }
+
   player?.pause();
   player?.remove();
   player = createAudioPlayer({ uri: file.uri });

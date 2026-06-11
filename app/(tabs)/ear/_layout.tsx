@@ -17,6 +17,10 @@ export default function EarLayout() {
         name="intervals"
         options={{ title: 'Intervals' }}
       />
+      <Stack.Screen
+        name="notes"
+        options={{ title: 'Note ID' }}
+      />
     </Stack>
   );
 }

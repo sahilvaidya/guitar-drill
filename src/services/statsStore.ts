@@ -5,6 +5,7 @@ import {
   DIRECTION_SETTINGS, EAR_LEVELS,
   DEFAULT_EAR_DIRECTION, DEFAULT_EAR_LEVEL,
 } from '@/domain/earInterval';
+import { EarNoteSet, DEFAULT_EAR_NOTE_SET } from '@/domain/earNote';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import { NoteName } from '@/domain/noteName';
 import { FretPosition } from '@/domain/fretPosition';
@@ -20,6 +21,8 @@ const KEYS = {
   speedGameBestScore: 'speedGameBestScore',
   earIntervalStats: 'earIntervalStats',
   earTrainingSettings: 'earTrainingSettings',
+  earNoteStats: 'earNoteStats',
+  earNoteSettings: 'earNoteSettings',
 } as const;
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -331,4 +334,83 @@ export async function loadEarTrainingSettings(): Promise<EarTrainingSettings> {
 
 export async function saveEarTrainingSettings(settings: EarTrainingSettings): Promise<void> {
   await AsyncStorage.setItem(KEYS.earTrainingSettings, JSON.stringify(settings));
+}
+
+// ── Ear Note ID ────────────────────────────────────────────────────────────
+
+export interface EarNoteLifetimeStats {
+  totalAnswers: number;
+  correctAnswers: number;
+  solvedPrompts: number;
+  firstTryCorrectAnswers: number;
+  bestStreak: number;
+}
+
+export const EMPTY_EAR_NOTE_LIFETIME_STATS: EarNoteLifetimeStats = {
+  totalAnswers: 0,
+  correctAnswers: 0,
+  solvedPrompts: 0,
+  firstTryCorrectAnswers: 0,
+  bestStreak: 0,
+};
+
+export interface EarNoteSettings {
+  noteSet: EarNoteSet;
+}
+
+export const DEFAULT_EAR_NOTE_SETTINGS: EarNoteSettings = {
+  noteSet: DEFAULT_EAR_NOTE_SET,
+};
+
+export async function loadEarNoteLifetimeStats(): Promise<EarNoteLifetimeStats> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.earNoteStats);
+    if (!raw) return EMPTY_EAR_NOTE_LIFETIME_STATS;
+    const r = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      totalAnswers:           typeof r.totalAnswers === 'number'           ? r.totalAnswers           : 0,
+      correctAnswers:         typeof r.correctAnswers === 'number'         ? r.correctAnswers         : 0,
+      solvedPrompts:          typeof r.solvedPrompts === 'number'          ? r.solvedPrompts          : 0,
+      firstTryCorrectAnswers: typeof r.firstTryCorrectAnswers === 'number' ? r.firstTryCorrectAnswers : 0,
+      bestStreak:             typeof r.bestStreak === 'number'             ? r.bestStreak             : 0,
+    };
+  } catch {
+    return EMPTY_EAR_NOTE_LIFETIME_STATS;
+  }
+}
+
+export async function recordEarNoteAttempt(params: {
+  correct: boolean;
+  currentStreak: number;
+  isFirstTry: boolean;
+  isSolvedPrompt: boolean;
+}): Promise<void> {
+  const stats = await loadEarNoteLifetimeStats();
+  const updated: EarNoteLifetimeStats = {
+    totalAnswers:           stats.totalAnswers + 1,
+    correctAnswers:         params.correct ? stats.correctAnswers + 1 : stats.correctAnswers,
+    solvedPrompts:          params.isSolvedPrompt ? stats.solvedPrompts + 1 : stats.solvedPrompts,
+    firstTryCorrectAnswers: params.isFirstTry && params.correct ? stats.firstTryCorrectAnswers + 1 : stats.firstTryCorrectAnswers,
+    bestStreak:             Math.max(stats.bestStreak, params.currentStreak),
+  };
+  await AsyncStorage.setItem(KEYS.earNoteStats, JSON.stringify(updated));
+}
+
+export async function loadEarNoteSettings(): Promise<EarNoteSettings> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.earNoteSettings);
+    if (!raw) return DEFAULT_EAR_NOTE_SETTINGS;
+    const r = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      noteSet: (r.noteSet === 'natural' || r.noteSet === 'chromatic')
+        ? (r.noteSet as EarNoteSet)
+        : DEFAULT_EAR_NOTE_SET,
+    };
+  } catch {
+    return DEFAULT_EAR_NOTE_SETTINGS;
+  }
+}
+
+export async function saveEarNoteSettings(settings: EarNoteSettings): Promise<void> {
+  await AsyncStorage.setItem(KEYS.earNoteSettings, JSON.stringify(settings));
 }

@@ -65,8 +65,7 @@ export default function EarHomeScreen() {
         title="Note Identification"
         description="Hear a single note and name it. Builds absolute pitch reference."
         icon="musical-note"
-        onPress={() => {}}
-        available={false}
+        onPress={() => router.push('/ear/notes')}
       />
       <EarTopicCard
         title="Chord Identification"

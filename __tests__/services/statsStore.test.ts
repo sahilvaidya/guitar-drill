@@ -15,8 +15,13 @@ import {
   recordEarIntervalAttempt,
   loadEarTrainingSettings,
   saveEarTrainingSettings,
+  loadEarNoteLifetimeStats,
+  recordEarNoteAttempt,
+  loadEarNoteSettings,
+  saveEarNoteSettings,
   EMPTY_LIFETIME_STATS,
   EMPTY_EAR_LIFETIME_STATS,
+  EMPTY_EAR_NOTE_LIFETIME_STATS,
 } from '../../src/services/statsStore';
 
 const store: Record<string, string> = {};
@@ -195,5 +200,50 @@ describe('earTrainingSettings', () => {
   test('falls back to defaults for unrecognized stored values', async () => {
     store['earTrainingSettings'] = JSON.stringify({ direction: 'sideways', level: 'expert' });
     expect(await loadEarTrainingSettings()).toEqual({ direction: 'ascending', level: 'beginner' });
+  });
+});
+
+describe('earNoteStats', () => {
+  test('returns empty stats when nothing stored', async () => {
+    expect(await loadEarNoteLifetimeStats()).toEqual(EMPTY_EAR_NOTE_LIFETIME_STATS);
+  });
+
+  test('recordEarNoteAttempt increments counters', async () => {
+    await recordEarNoteAttempt({ correct: true, currentStreak: 1, isFirstTry: true, isSolvedPrompt: true });
+    await recordEarNoteAttempt({ correct: false, currentStreak: 0, isFirstTry: true, isSolvedPrompt: false });
+    const stats = await loadEarNoteLifetimeStats();
+    expect(stats.totalAnswers).toBe(2);
+    expect(stats.correctAnswers).toBe(1);
+    expect(stats.firstTryCorrectAnswers).toBe(1);
+    expect(stats.solvedPrompts).toBe(1);
+    expect(stats.bestStreak).toBe(1);
+  });
+
+  test('recovers from corrupt stored value', async () => {
+    store['earNoteStats'] = '{not json';
+    expect(await loadEarNoteLifetimeStats()).toEqual(EMPTY_EAR_NOTE_LIFETIME_STATS);
+  });
+});
+
+describe('earNoteSettings', () => {
+  test('defaults to natural', async () => {
+    expect(await loadEarNoteSettings()).toEqual({ noteSet: 'natural' });
+  });
+
+  test('persists chromatic', async () => {
+    await saveEarNoteSettings({ noteSet: 'chromatic' });
+    expect(await loadEarNoteSettings()).toEqual({ noteSet: 'chromatic' });
+  });
+
+  test('falls back to default for unrecognized stored value', async () => {
+    store['earNoteSettings'] = JSON.stringify({ noteSet: 'pentatonic' });
+    expect(await loadEarNoteSettings()).toEqual({ noteSet: 'natural' });
+  });
+
+  test('round-trips natural → chromatic → natural', async () => {
+    await saveEarNoteSettings({ noteSet: 'chromatic' });
+    expect(await loadEarNoteSettings()).toEqual({ noteSet: 'chromatic' });
+    await saveEarNoteSettings({ noteSet: 'natural' });
+    expect(await loadEarNoteSettings()).toEqual({ noteSet: 'natural' });
   });
 });
