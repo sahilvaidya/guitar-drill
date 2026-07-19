@@ -3,6 +3,7 @@ import { QuizPrompt } from '@/domain/quizPrompt';
 import { NoteName } from '@/domain/noteName';
 import { NotePracticeMode, DEFAULT_PRACTICE_MODE } from '@/domain/notePracticeMode';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
+import { GuitarStringName, DEFAULT_ENABLED_STRINGS } from '@/domain/guitarString';
 import {
   AccidentalDisplay, naturalNotes, displayChromaticChoices, normalizeToCanonical,
 } from '@/domain/noteName';
@@ -16,6 +17,7 @@ import {
   loadLifetimeStats,
   loadPracticeMode,
   loadFretRange,
+  loadEnabledStrings,
   loadRecentMisses,
   loadTimingStats,
   recordAttempt,
@@ -23,6 +25,7 @@ import {
   recordCorrectAnswerDuration,
   savePracticeMode,
   saveFretRange,
+  saveEnabledStrings,
 } from '@/services/statsStore';
 
 export type Feedback = { answer: string; isCorrect: boolean };
@@ -44,6 +47,7 @@ interface PracticeSessionState {
   lifetimeStats: LifetimeStats;
   mode: NotePracticeMode;
   fretRange: FretRange;
+  enabledStrings: GuitarStringName[];
   timingStats: PromptTimingStats;
   recentMisses: RecentMiss[];
   // timing
@@ -59,6 +63,7 @@ interface PracticeSessionActions {
   nextPrompt: () => void;
   setMode: (mode: NotePracticeMode) => Promise<void>;
   setFretRange: (range: FretRange) => Promise<void>;
+  setEnabledStrings: (strings: GuitarStringName[]) => Promise<void>;
 }
 
 const initialSessionStats: SessionStats = {
@@ -68,8 +73,10 @@ const initialSessionStats: SessionStats = {
   incorrectThisPrompt: 0,
 };
 
-function engineConfig(state: Pick<PracticeSessionState, 'mode' | 'fretRange'>): QuizEngineConfig {
-  return { mode: state.mode, fretRange: state.fretRange };
+function engineConfig(
+  state: Pick<PracticeSessionState, 'mode' | 'fretRange' | 'enabledStrings'>
+): QuizEngineConfig {
+  return { mode: state.mode, fretRange: state.fretRange, enabledStrings: state.enabledStrings };
 }
 
 function randomAccidentalDisplay(): AccidentalDisplay {
@@ -85,6 +92,7 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
     lifetimeStats: EMPTY_LIFETIME_STATS,
     mode: DEFAULT_PRACTICE_MODE,
     fretRange: DEFAULT_FRET_RANGE,
+    enabledStrings: DEFAULT_ENABLED_STRINGS,
     timingStats: { recentDurations: [], averageDuration: null },
     recentMisses: [],
     promptPresentedAt: null,
@@ -92,19 +100,21 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
     now: () => Date.now(),
 
     initialize: async () => {
-      const [lifetimeStats, mode, fretRange, recentMisses, timingStats] = await Promise.all([
+      const [lifetimeStats, mode, fretRange, enabledStrings, recentMisses, timingStats] = await Promise.all([
         loadLifetimeStats(),
         loadPracticeMode(),
         loadFretRange(),
+        loadEnabledStrings(),
         loadRecentMisses(),
         loadTimingStats(),
       ]);
-      const config: QuizEngineConfig = { mode, fretRange };
+      const config: QuizEngineConfig = { mode, fretRange, enabledStrings };
       const prompt = makeWeightedPrompt(config, recentMisses);
       set({
         lifetimeStats,
         mode,
         fretRange,
+        enabledStrings,
         recentMisses,
         timingStats,
         prompt,
@@ -186,16 +196,24 @@ export const usePracticeSession = create<PracticeSessionState & PracticeSessionA
 
     setMode: async (mode: NotePracticeMode) => {
       await savePracticeMode(mode);
-      const config = engineConfig({ mode, fretRange: get().fretRange });
+      const config = engineConfig({ mode, fretRange: get().fretRange, enabledStrings: get().enabledStrings });
       const prompt = makeWeightedPrompt(config, get().recentMisses);
       set({ mode, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
 
     setFretRange: async (range: FretRange) => {
       await saveFretRange(range);
-      const config = engineConfig({ mode: get().mode, fretRange: range });
+      const config = engineConfig({ mode: get().mode, fretRange: range, enabledStrings: get().enabledStrings });
       const prompt = makeWeightedPrompt(config, get().recentMisses);
       set({ fretRange: range, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
+    },
+
+    setEnabledStrings: async (strings: GuitarStringName[]) => {
+      if (strings.length === 0) return;
+      await saveEnabledStrings(strings);
+      const config = engineConfig({ mode: get().mode, fretRange: get().fretRange, enabledStrings: strings });
+      const prompt = makeWeightedPrompt(config, get().recentMisses);
+      set({ enabledStrings: strings, prompt, feedback: null, accidentalDisplay: randomAccidentalDisplay(), promptPresentedAt: get().now() });
     },
   })
 );

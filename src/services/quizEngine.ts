@@ -1,4 +1,4 @@
-import { GUITAR_STRINGS } from '@/domain/guitarString';
+import { GUITAR_STRINGS, GuitarStringName, stringDefsForEnabled } from '@/domain/guitarString';
 import { FretPosition, noteNameForMode, getAllPositionsForNote, chromaticNoteName } from '@/domain/fretPosition';
 import { FretRange, fretRangeToArray } from '@/domain/fretRange';
 import { NotePracticeMode } from '@/domain/notePracticeMode';
@@ -10,12 +10,15 @@ import { GuitarStringDef } from '@/domain/guitarString';
 export interface QuizEngineConfig {
   mode: NotePracticeMode;
   fretRange: FretRange;
+  /** Strings eligible to be quizzed on; unset or empty means all strings. */
+  enabledStrings?: GuitarStringName[];
 }
 
 export function buildPositions(config: QuizEngineConfig): FretPosition[] {
   const frets = fretRangeToArray(config.fretRange);
+  const strings = stringDefsForEnabled(config.enabledStrings);
   const positions: FretPosition[] = [];
-  for (const string of GUITAR_STRINGS) {
+  for (const string of strings) {
     for (const fret of frets) {
       const pos: FretPosition = { string, fret };
       if (noteNameForMode(pos, config.mode) !== null) {

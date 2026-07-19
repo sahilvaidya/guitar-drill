@@ -5,6 +5,8 @@ import {
   savePracticeMode,
   loadFretRange,
   saveFretRange,
+  loadEnabledStrings,
+  saveEnabledStrings,
   loadRecentMisses,
   recordMiss,
   loadTimingStats,
@@ -88,6 +90,32 @@ describe('fretRange', () => {
   test('persists custom range', async () => {
     await saveFretRange({ start: 3, end: 7 });
     expect(await loadFretRange()).toEqual({ start: 3, end: 7 });
+  });
+});
+
+describe('enabledStrings', () => {
+  test('defaults to all six strings', async () => {
+    expect(await loadEnabledStrings()).toEqual(['lowE', 'A', 'D', 'G', 'B', 'highE']);
+  });
+
+  test('persists a custom subset', async () => {
+    await saveEnabledStrings(['A', 'D', 'G', 'B']);
+    expect(await loadEnabledStrings()).toEqual(['A', 'D', 'G', 'B']);
+  });
+
+  test('falls back to default when stored value is empty', async () => {
+    await saveEnabledStrings([]);
+    expect(await loadEnabledStrings()).toEqual(['lowE', 'A', 'D', 'G', 'B', 'highE']);
+  });
+
+  test('drops unrecognized entries and falls back if nothing valid remains', async () => {
+    store['enabledStrings'] = JSON.stringify(['nope', 'alsoNope']);
+    expect(await loadEnabledStrings()).toEqual(['lowE', 'A', 'D', 'G', 'B', 'highE']);
+  });
+
+  test('filters out unrecognized entries but keeps valid ones', async () => {
+    store['enabledStrings'] = JSON.stringify(['lowE', 'bogus', 'highE']);
+    expect(await loadEnabledStrings()).toEqual(['lowE', 'highE']);
   });
 });
 

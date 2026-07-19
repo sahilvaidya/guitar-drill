@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { QuizPrompt } from '@/domain/quizPrompt';
 import { NotePracticeMode, DEFAULT_PRACTICE_MODE } from '@/domain/notePracticeMode';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
+import { GuitarStringName, DEFAULT_ENABLED_STRINGS } from '@/domain/guitarString';
 import {
   AccidentalDisplay, displayNoteForAccidental, normalizeToCanonical,
 } from '@/domain/noteName';
@@ -11,7 +12,7 @@ import {
 import { pickDistractors } from '@/domain/speedGameDistractors';
 import { evaluate, makeRandomPrompt, QuizEngineConfig } from '@/services/quizEngine';
 import {
-  loadPracticeMode, loadFretRange, loadSpeedGameBestScore, recordSpeedGameScore,
+  loadPracticeMode, loadFretRange, loadEnabledStrings, loadSpeedGameBestScore, recordSpeedGameScore,
 } from '@/services/statsStore';
 
 export type SpeedGameStatus = 'idle' | 'playing' | 'gameOver';
@@ -34,6 +35,7 @@ interface SpeedGameState {
   isNewBest: boolean;
   mode: NotePracticeMode;
   fretRange: FretRange;
+  enabledStrings: GuitarStringName[];
   accidentalDisplay: AccidentalDisplay;
   // injectable for tests
   now: () => number;
@@ -76,18 +78,20 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
   isNewBest: false,
   mode: DEFAULT_PRACTICE_MODE,
   fretRange: DEFAULT_FRET_RANGE,
+  enabledStrings: DEFAULT_ENABLED_STRINGS,
   accidentalDisplay: 'sharp',
   now: () => Date.now(),
   rng: Math.random,
 
   start: async () => {
-    const [mode, fretRange, bestScore] = await Promise.all([
+    const [mode, fretRange, enabledStrings, bestScore] = await Promise.all([
       loadPracticeMode(),
       loadFretRange(),
+      loadEnabledStrings(),
       loadSpeedGameBestScore(),
     ]);
     const { now, rng } = get();
-    const config: QuizEngineConfig = { mode, fretRange };
+    const config: QuizEngineConfig = { mode, fretRange, enabledStrings };
     const accidentalDisplay: AccidentalDisplay = rng() < 0.5 ? 'sharp' : 'flat';
     const prompt = makeRandomPrompt(config);
     set({
@@ -103,6 +107,7 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
       isNewBest: false,
       mode,
       fretRange,
+      enabledStrings,
       accidentalDisplay,
     });
   },
@@ -153,7 +158,7 @@ export const useSpeedGame = create<SpeedGameState & SpeedGameActions>((set, get)
       return;
     }
 
-    const config: QuizEngineConfig = { mode: state.mode, fretRange: state.fretRange };
+    const config: QuizEngineConfig = { mode: state.mode, fretRange: state.fretRange, enabledStrings: state.enabledStrings };
     const accidentalDisplay: AccidentalDisplay = state.rng() < 0.5 ? 'sharp' : 'flat';
     const prompt = makeRandomPrompt(config, state.prompt);
     set({

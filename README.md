@@ -63,6 +63,8 @@ as roadmap items are completed.
 - Natural-notes or full chromatic mode (prompts alternate sharp/flat
   spellings so you learn both)
 - Configurable fret range (0–12) respected by every drill
+- Per-string toggle (Note Identification — Training & Speed Game) to include
+  or exclude individual strings, e.g. drop the high/low E strings
 - Session and lifetime stats, response timing, recent misses — all persisted
   locally on device
 

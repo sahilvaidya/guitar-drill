@@ -21,3 +21,13 @@ export function guitarStringByIndex(index: number): GuitarStringDef {
   if (!s) throw new Error(`Invalid string index: ${index}`);
   return s;
 }
+
+export const ALL_STRING_NAMES: GuitarStringName[] = GUITAR_STRINGS.map(s => s.name);
+
+export const DEFAULT_ENABLED_STRINGS: GuitarStringName[] = ALL_STRING_NAMES;
+
+/** Resolves an enabled-strings setting to the string defs it selects, falling back to all strings when unset/empty. */
+export function stringDefsForEnabled(enabled?: GuitarStringName[]): GuitarStringDef[] {
+  if (!enabled || enabled.length === 0) return GUITAR_STRINGS;
+  return GUITAR_STRINGS.filter(s => enabled.includes(s.name));
+}

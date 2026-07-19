@@ -5,7 +5,16 @@ import {
 import { Stack } from 'expo-router';
 import { usePracticeSession } from '@/store/usePracticeSession';
 import { clampedFretRange } from '@/domain/fretRange';
-import { GUITAR_STRINGS } from '@/domain/guitarString';
+import { GUITAR_STRINGS, GuitarStringName } from '@/domain/guitarString';
+
+const STRING_DISPLAY_LABEL: Record<GuitarStringName, string> = {
+  lowE: 'Low E (6th)',
+  A: 'A (5th)',
+  D: 'D (4th)',
+  G: 'G (3rd)',
+  B: 'B (2nd)',
+  highE: 'High E (1st)',
+};
 
 function Stepper({
   value, min, max, onChange,
@@ -32,7 +41,17 @@ function Stepper({
 }
 
 export default function SettingsScreen() {
-  const { mode, fretRange, recentMisses, setMode, setFretRange } = usePracticeSession();
+  const {
+    mode, fretRange, enabledStrings, recentMisses, setMode, setFretRange, setEnabledStrings,
+  } = usePracticeSession();
+
+  const toggleString = (name: GuitarStringName, isEnabled: boolean) => {
+    if (!isEnabled && enabledStrings.length <= 1) return;
+    const next = isEnabled
+      ? [...enabledStrings, name]
+      : enabledStrings.filter(s => s !== name);
+    setEnabledStrings(next);
+  };
 
   return (
     <>
@@ -79,6 +98,24 @@ export default function SettingsScreen() {
                 onChange={v => setFretRange(clampedFretRange(fretRange.start, v))}
               />
             </View>
+          </View>
+
+          {/* Strings */}
+          <Text style={styles.sectionHeader}>Strings</Text>
+          <View style={styles.card}>
+            {GUITAR_STRINGS.map((s, i) => {
+              const isEnabled = enabledStrings.includes(s.name);
+              return (
+                <View key={s.name} style={[styles.rangeRow, i > 0 && styles.rangeRowBorder]}>
+                  <Text style={styles.rangeLabel}>{STRING_DISPLAY_LABEL[s.name]}</Text>
+                  <Switch
+                    value={isEnabled}
+                    onValueChange={v => toggleString(s.name, v)}
+                    disabled={isEnabled && enabledStrings.length <= 1}
+                  />
+                </View>
+              );
+            })}
           </View>
 
           {/* Recent misses */}

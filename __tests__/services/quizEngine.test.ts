@@ -1,5 +1,6 @@
-import { makePromptAtIndex, makeRandomPrompt, evaluate } from '../../src/services/quizEngine';
+import { makePromptAtIndex, makeRandomPrompt, evaluate, buildPositions, QuizEngineConfig } from '../../src/services/quizEngine';
 import { DEFAULT_FRET_RANGE } from '../../src/domain/fretRange';
+import { GuitarStringName } from '../../src/domain/guitarString';
 
 const naturalConfig = { mode: 'natural' as const, fretRange: DEFAULT_FRET_RANGE };
 const chromaticConfig = { mode: 'chromatic' as const, fretRange: DEFAULT_FRET_RANGE };
@@ -66,5 +67,39 @@ describe('fret range filtering', () => {
     const prompts = Array.from({ length: 30 }, (_, i) => makePromptAtIndex(config, i));
     const allInRange = prompts.every(p => p.position.fret >= 5 && p.position.fret <= 7);
     expect(allInRange).toBe(true);
+  });
+});
+
+describe('enabled strings filtering', () => {
+  test('unset enabledStrings includes all six strings', () => {
+    const positions = buildPositions(naturalConfig);
+    const stringIndices = new Set(positions.map(p => p.string.index));
+    expect(stringIndices.size).toBe(6);
+  });
+
+  test('excludes disabled strings from generated positions', () => {
+    const enabledStrings: GuitarStringName[] = ['A', 'D', 'G', 'B'];
+    const config: QuizEngineConfig = { mode: 'natural', fretRange: DEFAULT_FRET_RANGE, enabledStrings };
+    const positions = buildPositions(config);
+    const stringNames = new Set(positions.map(p => p.string.name));
+    expect(stringNames.has('lowE')).toBe(false);
+    expect(stringNames.has('highE')).toBe(false);
+    expect(stringNames).toEqual(new Set(enabledStrings));
+  });
+
+  test('makeRandomPrompt only draws from enabled strings', () => {
+    const enabledStrings: GuitarStringName[] = ['lowE', 'highE'];
+    const config: QuizEngineConfig = { mode: 'natural', fretRange: DEFAULT_FRET_RANGE, enabledStrings };
+    for (let i = 0; i < 30; i++) {
+      const prompt = makeRandomPrompt(config);
+      expect(enabledStrings).toContain(prompt.position.string.name);
+    }
+  });
+
+  test('empty enabledStrings array falls back to all strings', () => {
+    const config: QuizEngineConfig = { mode: 'natural', fretRange: DEFAULT_FRET_RANGE, enabledStrings: [] };
+    const positions = buildPositions(config);
+    const stringIndices = new Set(positions.map(p => p.string.index));
+    expect(stringIndices.size).toBe(6);
   });
 });

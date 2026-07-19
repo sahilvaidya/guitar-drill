@@ -9,11 +9,13 @@ import { EarNoteSet, DEFAULT_EAR_NOTE_SET } from '@/domain/earNote';
 import { FretRange, DEFAULT_FRET_RANGE } from '@/domain/fretRange';
 import { NoteName } from '@/domain/noteName';
 import { FretPosition } from '@/domain/fretPosition';
+import { GuitarStringName, ALL_STRING_NAMES, DEFAULT_ENABLED_STRINGS } from '@/domain/guitarString';
 
 const KEYS = {
   lifetimeStats: 'lifetimeStats',
   practiceMode: 'practiceMode',
   fretRange: 'fretRange',
+  enabledStrings: 'enabledStrings',
   recentMisses: 'recentMisses',
   timingStats: 'timingStats',
   inverseLifetimeStats: 'inverseLifetimeStats',
@@ -148,6 +150,24 @@ export async function loadFretRange(): Promise<FretRange> {
 
 export async function saveFretRange(range: FretRange): Promise<void> {
   await AsyncStorage.setItem(KEYS.fretRange, JSON.stringify(range));
+}
+
+export async function loadEnabledStrings(): Promise<GuitarStringName[]> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.enabledStrings);
+    if (!raw) return DEFAULT_ENABLED_STRINGS;
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return DEFAULT_ENABLED_STRINGS;
+    const valid = parsed.filter((s): s is GuitarStringName =>
+      (ALL_STRING_NAMES as string[]).includes(s));
+    return valid.length > 0 ? valid : DEFAULT_ENABLED_STRINGS;
+  } catch {
+    return DEFAULT_ENABLED_STRINGS;
+  }
+}
+
+export async function saveEnabledStrings(strings: GuitarStringName[]): Promise<void> {
+  await AsyncStorage.setItem(KEYS.enabledStrings, JSON.stringify(strings));
 }
 
 export async function loadRecentMisses(): Promise<RecentMiss[]> {
