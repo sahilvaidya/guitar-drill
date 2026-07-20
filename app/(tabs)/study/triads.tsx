@@ -15,7 +15,7 @@ import {
   triadNotes,
   TriadQuality,
 } from '@/domain/triad';
-import { TRIAD_SHAPES } from '@/domain/triadShapes';
+import { TRIAD_SHAPES, TRIAD_STRING_SETS, TriadStringSetId } from '@/domain/triadShapes';
 import TriadDiagramView from '@/components/TriadDiagramView';
 
 // C (pitch class 0) is used for the example notes row
@@ -23,10 +23,11 @@ const EXAMPLE_ROOT = 0;
 
 type Section = 'reference' | 'practice';
 
-function TriadCard({ quality }: { quality: TriadQuality }) {
+function TriadCard({ quality, stringSetId }: { quality: TriadQuality; stringSetId: TriadStringSetId }) {
   const color = TRIAD_COLOR[quality];
   const notes = triadNotes(EXAMPLE_ROOT, quality);
-  const shapes = TRIAD_SHAPES[quality];
+  const stringSet = TRIAD_STRING_SETS.find(s => s.id === stringSetId)!;
+  const shapes = TRIAD_SHAPES[stringSetId][quality];
 
   return (
     <View style={styles.triadCard}>
@@ -55,14 +56,14 @@ function TriadCard({ quality }: { quality: TriadQuality }) {
 
       {/* Shape diagrams */}
       <View style={[styles.shapesDivider, { backgroundColor: color + '30' }]} />
-      <Text style={[styles.shapesHeader, { color }]}>Strings G · B · e</Text>
+      <Text style={[styles.shapesHeader, { color }]}>Strings {stringSet.label}</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.diagramsRow}
       >
         {shapes.map((shape, i) => (
-          <TriadDiagramView key={i} shape={shape} color={color} />
+          <TriadDiagramView key={i} shape={shape} color={color} strings={stringSet.strings} />
         ))}
       </ScrollView>
     </View>
@@ -71,6 +72,7 @@ function TriadCard({ quality }: { quality: TriadQuality }) {
 
 export default function TriadsScreen() {
   const [section, setSection] = useState<Section>('reference');
+  const [stringSetId, setStringSetId] = useState<TriadStringSetId>('strings123');
 
   return (
     <View style={styles.container}>
@@ -93,11 +95,38 @@ export default function TriadsScreen() {
 
       {/* Content */}
       {section === 'reference' ? (
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          {TRIAD_QUALITIES.map(quality => (
-            <TriadCard key={quality} quality={quality} />
-          ))}
-        </ScrollView>
+        <>
+          {/* String-set picker */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.stringSetWrapper}
+            contentContainerStyle={styles.stringSetRow}
+          >
+            {TRIAD_STRING_SETS.map(set => (
+              <Pressable
+                key={set.id}
+                style={[styles.stringSetChip, stringSetId === set.id && styles.stringSetChipActive]}
+                onPress={() => setStringSetId(set.id)}
+              >
+                <Text
+                  style={[
+                    styles.stringSetChipText,
+                    stringSetId === set.id && styles.stringSetChipTextActive,
+                  ]}
+                >
+                  {set.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
+
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {TRIAD_QUALITIES.map(quality => (
+              <TriadCard key={quality} quality={quality} stringSetId={stringSetId} />
+            ))}
+          </ScrollView>
+        </>
       ) : (
         <View style={styles.practiceShell}>
           <Text style={styles.practiceTitle}>Triad Practice</Text>
@@ -135,6 +164,17 @@ const styles = StyleSheet.create({
   },
   segmentText: { fontSize: 14, fontWeight: '500', color: '#1C1C1E' },
   segmentTextActive: { fontWeight: '600', color: '#1C1C1E' },
+
+  // String-set picker
+  stringSetWrapper: { flexGrow: 0 },
+  stringSetRow: { paddingHorizontal: 16, paddingBottom: 12, gap: 8 },
+  stringSetChip: {
+    paddingHorizontal: 14, paddingVertical: 7, borderRadius: 16,
+    backgroundColor: '#E5E5EA',
+  },
+  stringSetChipActive: { backgroundColor: '#1C1C1E' },
+  stringSetChipText: { fontSize: 13, fontWeight: '600', color: '#1C1C1E' },
+  stringSetChipTextActive: { color: '#fff' },
 
   // Triad cards
   scrollContent: { padding: 16, paddingTop: 0, gap: 14, paddingBottom: 40 },
