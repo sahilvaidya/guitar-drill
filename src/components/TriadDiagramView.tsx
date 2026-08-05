@@ -25,11 +25,10 @@ const strGap = boardH / (N_STRINGS - 1);      // 29
 // Display indices:     0=e (top), 1=B (mid), 2=G (bottom)
 // → displayIndex = 2 - shapeIndex
 const STRING_Y = [
-  PAD_T,              // e (shape index 2) → display index 0
-  PAD_T + strGap,     // B (shape index 1) → display index 1
-  PAD_T + 2 * strGap, // G (shape index 0) → display index 2
+  PAD_T,              // high string (shape index 2) → display index 0
+  PAD_T + strGap,     // mid string (shape index 1) → display index 1
+  PAD_T + 2 * strGap, // low string (shape index 0) → display index 2
 ];
-const STRING_LABELS = ['e', 'B', 'G']; // display order top→bottom
 
 function dotX(offset: number) {
   return LABEL_W + (offset + 0.5) * fretW;
@@ -61,9 +60,14 @@ interface Props {
   shape: TriadShape;
   /** Quality colour used for dot fill / tint */
   color: string;
+  /** String names, low to high pitch — matches shape.offsets/roles order */
+  strings: [string, string, string];
 }
 
-export default function TriadDiagramView({ shape, color }: Props) {
+export default function TriadDiagramView({ shape, color, strings }: Props) {
+  // Display order is top→bottom = high string → low string
+  const stringLabels = [strings[2], strings[1], strings[0]];
+
   return (
     <View style={styles.wrapper}>
       <Svg width={W} height={H}>
@@ -71,7 +75,7 @@ export default function TriadDiagramView({ shape, color }: Props) {
         <Rect x={0} y={0} width={W} height={H} rx={8} fill="#F9F9F9" />
 
         {/* String labels */}
-        {STRING_LABELS.map((label, di) => (
+        {stringLabels.map((label, di) => (
           <SvgText
             key={label}
             x={LABEL_W / 2}

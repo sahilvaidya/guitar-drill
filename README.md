@@ -52,8 +52,9 @@ as roadmap items are completed.
   (major, minor, 7, m7, maj7), and power chords. A root-note picker
   transposes every moveable shape to any key with real fret numbers.
 - **Triads**: theory and all closed-position voicings (root position, 1st
-  and 2nd inversion) for major, minor, diminished, and augmented triads on
-  the top three strings.
+  and 2nd inversion) for major, minor, diminished, and augmented triads,
+  browsable across all four adjacent 3-string sets (e·B·G, B·G·D, A·D·G,
+  E·A·D).
 - **CAGED System**: the five pentatonic boxes and five full scale positions
   up the neck, with a Major/Minor toggle that relabels every scale degree
   for the relative key — plus harmonized two-string thirds and sixths runs.
