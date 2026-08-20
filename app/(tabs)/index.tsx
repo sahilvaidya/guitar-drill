@@ -45,6 +45,11 @@ export default function PracticeTab() {
           description="Tap the correct fret position for a given note name."
           onPress={() => router.push('/inverse-drill')}
         />
+        <DrillCard
+          title="Chord Numbers"
+          description="Get a key and a numbered progression (1–7) — find each chord on the neck."
+          onPress={() => router.push('/chord-number-practice')}
+        />
       </View>
     </SafeAreaView>
   );

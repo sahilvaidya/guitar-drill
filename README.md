@@ -28,6 +28,11 @@ as roadmap items are completed.
   chord live. Recognizes major, minor, dim, dim7, 7, maj7, m7, sus2 and sus4,
   including shell voicings (omitted 5th) and slash chords (C/E, D/F#) when
   the bass isn't the root.
+- **Chord Numbers**: get a random key (major or minor) and a short numbered
+  progression — 2 to 5 chords drawn from the scale degrees 1–7 — then find
+  each chord on the neck. Reveal the actual chord spellings (correct for the
+  key, e.g. F# in G major, Bb in F major) to check yourself, or view the
+  whole diatonic set at once.
 
 ### Ear Training
 
