@@ -161,25 +161,37 @@ export function diatonicChords(
   );
 }
 
+/** Pick a degree 1–7 that isn't in `exclude`. Falls back to any degree. */
+function drawDegree(rng: () => number, exclude: Set<number>): number {
+  const pool = [1, 2, 3, 4, 5, 6, 7].filter(n => !exclude.has(n));
+  const choices = pool.length > 0 ? pool : [1, 2, 3, 4, 5, 6, 7];
+  return choices[Math.min(choices.length - 1, Math.floor(rng() * choices.length))];
+}
+
 /**
  * Build a random progression of chord numbers.
  * @param count       how many chords (2–5)
  * @param rng         injectable [0,1) source for testing
- * Consecutive numbers never repeat, so the progression always moves.
+ * The tonic (degree 1) always appears at least once so the progression is
+ * anchored to the key's root, and consecutive numbers never repeat so it
+ * always moves.
  */
 export function randomChordNumbers(
   count: number,
   rng: () => number = Math.random,
 ): number[] {
+  // Reserve one position for the root so every progression is anchored to it.
+  const rootIndex = Math.min(count - 1, Math.floor(rng() * count));
   const numbers: number[] = [];
   for (let i = 0; i < count; i++) {
-    let next = 1 + Math.floor(rng() * 7);
-    if (next > 7) next = 7; // guard against rng() === 1
-    if (i > 0 && next === numbers[i - 1]) {
-      // Rotate to the next degree so we never repeat the previous chord.
-      next = (next % 7) + 1;
+    if (i === rootIndex) {
+      numbers.push(1);
+      continue;
     }
-    numbers.push(next);
+    const exclude = new Set<number>();
+    if (i > 0) exclude.add(numbers[i - 1]); // no immediate repeat
+    if (i + 1 === rootIndex) exclude.add(1); // keep the forced root distinct too
+    numbers.push(drawDegree(rng, exclude));
   }
   return numbers;
 }

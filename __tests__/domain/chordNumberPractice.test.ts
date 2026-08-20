@@ -141,6 +141,28 @@ describe('randomChordNumbers', () => {
       expect(n).toBeLessThanOrEqual(7);
     }
   });
+
+  it('always includes the tonic (degree 1)', () => {
+    // Across many rng values, every progression is anchored to the root.
+    for (let i = 0; i < 300; i++) {
+      for (let count = MIN_CHORDS; count <= MAX_CHORDS; count++) {
+        const nums = randomChordNumbers(count, Math.random);
+        expect(nums).toContain(1);
+        for (let j = 1; j < nums.length; j++) {
+          expect(nums[j]).not.toBe(nums[j - 1]);
+        }
+      }
+    }
+  });
+
+  it('places the root even when rng always picks the last position', () => {
+    // rootIndex resolves to the final slot; earlier draws must avoid 1 there.
+    const nums = randomChordNumbers(4, () => 0.999999);
+    expect(nums).toContain(1);
+    for (let i = 1; i < nums.length; i++) {
+      expect(nums[i]).not.toBe(nums[i - 1]);
+    }
+  });
 });
 
 describe('generateChordNumberPrompt', () => {
@@ -154,13 +176,14 @@ describe('generateChordNumberPrompt', () => {
     expect(prompt.keyLabel).toBe(keyLabel(prompt.keyPitchClass, prompt.keyQuality));
   });
 
-  it('stays in range across many random draws', () => {
+  it('stays in range and always anchors to the root across many random draws', () => {
     for (let i = 0; i < 500; i++) {
       const prompt = generateChordNumberPrompt(Math.random);
       expect(prompt.numbers.length).toBeGreaterThanOrEqual(MIN_CHORDS);
       expect(prompt.numbers.length).toBeLessThanOrEqual(MAX_CHORDS);
       expect(prompt.keyPitchClass).toBeGreaterThanOrEqual(0);
       expect(prompt.keyPitchClass).toBeLessThanOrEqual(11);
+      expect(prompt.numbers).toContain(1);
       for (const n of prompt.numbers) {
         expect(n).toBeGreaterThanOrEqual(1);
         expect(n).toBeLessThanOrEqual(7);
