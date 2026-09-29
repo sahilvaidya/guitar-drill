@@ -8,6 +8,13 @@ import {
   generateChordNumberPrompt,
   diatonicChord,
 } from '@/domain/chordNumberPractice';
+import { placeDiatonicTriads } from '@/domain/triadNeighbors';
+import { TRIAD_COLOR } from '@/domain/triad';
+import { TRIAD_STRING_SETS } from '@/domain/triadShapes';
+import TriadDiagramView from '@/components/TriadDiagramView';
+
+const TOP_STRINGS = TRIAD_STRING_SETS.find(s => s.id === 'strings123')!.strings;
+const INVERSION_LABELS = ['Root pos.', '1st inv.', '2nd inv.'];
 
 const MAJOR_COLOR = '#007AFF';
 const MINOR_COLOR = '#5856D6';
@@ -21,13 +28,20 @@ export default function ChordNumberPracticeScreen() {
     generateChordNumberPrompt(),
   );
   const [revealed, setRevealed] = useState(false);
+  const [showTriads, setShowTriads] = useState(false);
+  const [tonicInversion, setTonicInversion] = useState(0);
 
   const newPrompt = useCallback(() => {
     setPrompt(generateChordNumberPrompt());
     setRevealed(false);
+    setShowTriads(false);
   }, []);
 
   const accent = keyColor(prompt);
+  const uniqueNumbers = prompt.numbers.filter((n, i) => prompt.numbers.indexOf(n) === i);
+  const placedTriads = revealed && showTriads
+    ? placeDiatonicTriads(prompt.keyPitchClass, prompt.keyQuality, tonicInversion)
+    : [];
 
   return (
     <>
@@ -79,7 +93,10 @@ export default function ChordNumberPracticeScreen() {
           {/* Reveal / hide toggle */}
           <Pressable
             style={[styles.revealButton, revealed && styles.revealButtonActive]}
-            onPress={() => setRevealed(r => !r)}
+            onPress={() => {
+              setRevealed(r => !r);
+              setShowTriads(false);
+            }}
           >
             <Text style={[styles.revealButtonText, revealed && styles.revealButtonTextActive]}>
               {revealed ? 'Hide chords' : 'Reveal chords'}
@@ -107,6 +124,64 @@ export default function ChordNumberPracticeScreen() {
                   );
                 })}
               </View>
+            </View>
+          )}
+
+          {/* Second reveal: nearest top-string triad shapes */}
+          {revealed && (
+            <Pressable
+              style={[styles.revealButton, showTriads && styles.revealButtonActive]}
+              onPress={() => setShowTriads(t => !t)}
+            >
+              <Text style={styles.revealButtonText}>
+                {showTriads ? 'Hide top-string triads' : 'Show top-string triads'}
+              </Text>
+            </Pressable>
+          )}
+
+          {revealed && showTriads && (
+            <View style={styles.card}>
+              <Text style={styles.referenceCaption}>
+                Top-string triads (G · B · e) — each chord uses the shape nearest
+                the {prompt.keyRoot} shape
+              </Text>
+              <View style={styles.inversionRow}>
+                {INVERSION_LABELS.map((label, inv) => (
+                  <Pressable
+                    key={label}
+                    style={[styles.inversionChip, tonicInversion === inv && styles.inversionChipActive]}
+                    onPress={() => setTonicInversion(inv)}
+                  >
+                    <Text
+                      style={[
+                        styles.inversionChipText,
+                        tonicInversion === inv && styles.inversionChipTextActive,
+                      ]}
+                    >
+                      {label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <Text style={styles.tonicHint}>Start on 1 in this inversion</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.triadRow}>
+                {uniqueNumbers.map(n => {
+                  const t = placedTriads[n - 1];
+                  return (
+                    <View key={n} style={styles.triadCell}>
+                      <Text style={styles.triadHeading}>
+                        {n}  <Text style={styles.triadSymbol}>{t.symbol}</Text>
+                      </Text>
+                      <TriadDiagramView
+                        shape={t.shape}
+                        color={TRIAD_COLOR[t.quality]}
+                        strings={TOP_STRINGS}
+                        baseFret={t.baseFret}
+                      />
+                    </View>
+                  );
+                })}
+              </ScrollView>
             </View>
           )}
 
@@ -218,6 +293,22 @@ const styles = StyleSheet.create({
   },
   refNumber: { fontSize: 13, fontWeight: '700', color: '#8E8E93' },
   refSymbol: { fontSize: 16, fontWeight: '600', color: '#1C1C1E', marginTop: 2 },
+
+  inversionRow: { flexDirection: 'row', gap: 8, marginBottom: 6 },
+  inversionChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 14,
+    backgroundColor: '#F2F2F7',
+  },
+  inversionChipActive: { backgroundColor: '#007AFF' },
+  inversionChipText: { fontSize: 13, fontWeight: '600', color: '#8E8E93' },
+  inversionChipTextActive: { color: '#fff' },
+  tonicHint: { fontSize: 12, color: '#8E8E93', marginBottom: 12 },
+  triadRow: { gap: 14 },
+  triadCell: { alignItems: 'center', gap: 6 },
+  triadHeading: { fontSize: 13, fontWeight: '700', color: '#8E8E93' },
+  triadSymbol: { fontSize: 16, color: '#1C1C1E' },
 
   newButton: {
     backgroundColor: '#007AFF',

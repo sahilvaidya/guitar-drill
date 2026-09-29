@@ -32,7 +32,10 @@ as roadmap items are completed.
   progression — 2 to 5 chords drawn from the scale degrees 1–7, always
   anchored to the root (1) — then find each chord on the neck. Reveal the
   actual chord spellings (correct for the key, e.g. F# in G major, Bb in F
-  major) to check yourself, or view the whole diatonic set at once.
+  major) to check yourself, or view the whole diatonic set at once. A second
+  reveal shows top-string (G·B·e) triads for each chord in the progression:
+  pick which inversion of the 1 chord you're starting on and every other
+  chord shows the closest triad shape (and fret) to it.
 
 ### Ear Training
 

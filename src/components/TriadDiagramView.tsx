@@ -62,9 +62,11 @@ interface Props {
   color: string;
   /** String names, low to high pitch — matches shape.offsets/roles order */
   strings: [string, string, string];
+  /** When set, shown under the diagram as the fret the shape starts on */
+  baseFret?: number;
 }
 
-export default function TriadDiagramView({ shape, color, strings }: Props) {
+export default function TriadDiagramView({ shape, color, strings, baseFret }: Props) {
   // Display order is top→bottom = high string → low string
   const stringLabels = [strings[2], strings[1], strings[0]];
 
@@ -153,6 +155,11 @@ export default function TriadDiagramView({ shape, color, strings }: Props) {
 
       {/* Inversion label */}
       <Text style={styles.label}>{shape.label}</Text>
+      {baseFret !== undefined && (
+        <Text style={[styles.label, styles.fretLabel]}>
+          {baseFret === 0 ? 'open pos.' : `from fret ${baseFret}`}
+        </Text>
+      )}
     </View>
   );
 }
@@ -167,4 +174,5 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     fontWeight: '500',
   },
+  fretLabel: { color: '#1C1C1E', fontWeight: '600', marginTop: -2 },
 });
