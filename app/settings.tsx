@@ -1,11 +1,12 @@
 import React from 'react';
 import {
-  View, Text, Switch, Pressable, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, Switch, Pressable, ScrollView, StyleSheet, SafeAreaView, Alert,
 } from 'react-native';
 import { Stack } from 'expo-router';
 import { usePracticeSession } from '@/store/usePracticeSession';
 import { clampedFretRange } from '@/domain/fretRange';
 import { GUITAR_STRINGS } from '@/domain/guitarString';
+import { resetAllStats } from '@/services/statsStore';
 
 function Stepper({
   value, min, max, onChange,
@@ -32,7 +33,25 @@ function Stepper({
 }
 
 export default function SettingsScreen() {
-  const { mode, fretRange, recentMisses, setMode, setFretRange } = usePracticeSession();
+  const { mode, fretRange, recentMisses, setMode, setFretRange, initialize } = usePracticeSession();
+
+  function confirmReset() {
+    Alert.alert(
+      'Reset all stats?',
+      'This clears lifetime stats, recent misses and best scores in every drill. Your settings are kept. This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset',
+          style: 'destructive',
+          onPress: async () => {
+            await resetAllStats();
+            await initialize();
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <>
@@ -103,6 +122,19 @@ export default function SettingsScreen() {
             )}
           </View>
 
+          {/* Reset */}
+          <Text style={styles.sectionHeader}>Data</Text>
+          <View style={styles.card}>
+            <Pressable
+              style={styles.resetRow}
+              onPress={confirmReset}
+              accessibilityRole="button"
+              accessibilityLabel="Reset all stats"
+            >
+              <Text style={styles.resetText}>Reset all stats</Text>
+            </Pressable>
+          </View>
+
         </ScrollView>
       </SafeAreaView>
     </>
@@ -147,6 +179,9 @@ const styles = StyleSheet.create({
   stepBtnDisabled: { backgroundColor: '#E5E5EA' },
   stepBtnText: { fontSize: 20, fontWeight: '600', color: '#fff', lineHeight: 22 },
   stepValue: { fontSize: 17, fontWeight: '600', color: '#1C1C1E', minWidth: 24, textAlign: 'center' },
+
+  resetRow: { padding: 16 },
+  resetText: { fontSize: 15, fontWeight: '500', color: '#DC3545' },
 
   emptyText: { fontSize: 14, color: '#8E8E93', padding: 16 },
   missRow: { padding: 16 },

@@ -23,7 +23,25 @@ const KEYS = {
   earTrainingSettings: 'earTrainingSettings',
   earNoteStats: 'earNoteStats',
   earNoteSettings: 'earNoteSettings',
+  storageVersion: 'storageVersion',
 } as const;
+
+// Bump when a persisted shape changes incompatibly, and add a migration step
+// to `ensureStorageVersion` so existing users' data is upgraded, not lost.
+export const STORAGE_VERSION = 1;
+
+// Lifetime stats, history and best scores. Settings (mode, fret range, ear
+// options) are deliberately left out so a reset doesn't change preferences.
+const STAT_KEYS = [
+  KEYS.lifetimeStats,
+  KEYS.recentMisses,
+  KEYS.timingStats,
+  KEYS.inverseLifetimeStats,
+  KEYS.inverseMissedNotes,
+  KEYS.speedGameBestScore,
+  KEYS.earIntervalStats,
+  KEYS.earNoteStats,
+];
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -413,4 +431,24 @@ export async function loadEarNoteSettings(): Promise<EarNoteSettings> {
 
 export async function saveEarNoteSettings(settings: EarNoteSettings): Promise<void> {
   await AsyncStorage.setItem(KEYS.earNoteSettings, JSON.stringify(settings));
+}
+
+// ── Versioning & reset ─────────────────────────────────────────────────────
+
+/** Stamps the storage version on first run; future migrations hook in here. */
+export async function ensureStorageVersion(): Promise<void> {
+  try {
+    const raw = await AsyncStorage.getItem(KEYS.storageVersion);
+    const stored = raw === null ? 0 : Number(raw);
+    if (stored === STORAGE_VERSION) return;
+    // v0 -> v1: no data changes; loaders already tolerate missing fields.
+    await AsyncStorage.setItem(KEYS.storageVersion, String(STORAGE_VERSION));
+  } catch {
+    // Storage unavailable: loaders fall back to defaults, nothing to migrate.
+  }
+}
+
+/** Clears all lifetime stats and history, keeping settings. */
+export async function resetAllStats(): Promise<void> {
+  await Promise.all(STAT_KEYS.map(key => AsyncStorage.removeItem(key)));
 }

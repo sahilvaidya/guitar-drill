@@ -65,7 +65,7 @@ export default function ZoomedFretboardView({
   return (
     <View style={[styles.container, { width, height }]}>
       {/* SVG: visual rendering only — no touch events */}
-      <Svg width={width} height={height} style={StyleSheet.absoluteFillObject}>
+      <Svg width={width} height={height} style={StyleSheet.absoluteFill}>
         {/* background */}
         <Rect x={0} y={0} width={width} height={height} rx={14} fill="#fff" />
 

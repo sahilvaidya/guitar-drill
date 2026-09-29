@@ -19,13 +19,19 @@ function promptFileName(prompt: EarIntervalPrompt): string {
   return `ear-v${SYNTH_VERSION}-${prompt.rootMidi}-${prompt.interval}-${prompt.direction}.wav`;
 }
 
-function ensureCachedWav(prompt: EarIntervalPrompt): File {
-  const file = new File(Paths.cache, promptFileName(prompt));
-  if (!file.exists) {
-    file.create();
-    file.write(renderIntervalWav(prompt));
-  }
+// Returns a readable cached WAV, (re)rendering when the file is missing or was
+// left empty/truncated (e.g. the app was killed mid-write, or the OS purged it).
+function ensureWavFile(name: string, render: () => Uint8Array): File {
+  const file = new File(Paths.cache, name);
+  if (file.exists && file.size > 0) return file;
+  if (file.exists) file.delete();
+  file.create();
+  file.write(render());
   return file;
+}
+
+function ensureCachedWav(prompt: EarIntervalPrompt): File {
+  return ensureWavFile(promptFileName(prompt), () => renderIntervalWav(prompt));
 }
 
 async function ensureAudioMode(): Promise<void> {
@@ -45,11 +51,10 @@ async function ensureAudioMode(): Promise<void> {
 export async function startAudioKeepAlive(): Promise<void> {
   if (keepAlivePlayer) return;
   await ensureAudioMode();
-  const file = new File(Paths.cache, `ear-v${SYNTH_VERSION}-keepalive.wav`);
-  if (!file.exists) {
-    file.create();
-    file.write(encodeWavPcm16(keepAliveTone()));
-  }
+  const file = ensureWavFile(
+    `ear-v${SYNTH_VERSION}-keepalive.wav`,
+    () => encodeWavPcm16(keepAliveTone()),
+  );
   keepAlivePlayer = createAudioPlayer({ uri: file.uri });
   keepAlivePlayer.loop = true;
   keepAlivePlayer.play();
@@ -70,12 +75,7 @@ export async function playIntervalPrompt(prompt: EarIntervalPrompt): Promise<voi
 
 export async function playNotePrompt(midi: number): Promise<void> {
   await ensureAudioMode();
-  const fileName = `ear-note-v${SYNTH_VERSION}-${midi}.wav`;
-  const file = new File(Paths.cache, fileName);
-  if (!file.exists) {
-    file.create();
-    file.write(renderNoteWav(midi));
-  }
+  const file = ensureWavFile(`ear-note-v${SYNTH_VERSION}-${midi}.wav`, () => renderNoteWav(midi));
 
   player?.pause();
   player?.remove();

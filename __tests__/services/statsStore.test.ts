@@ -20,6 +20,9 @@ import {
   loadEarNoteSettings,
   saveEarNoteSettings,
   EMPTY_LIFETIME_STATS,
+  ensureStorageVersion,
+  resetAllStats,
+  STORAGE_VERSION,
   EMPTY_EAR_LIFETIME_STATS,
   EMPTY_EAR_NOTE_LIFETIME_STATS,
 } from '../../src/services/statsStore';
@@ -245,5 +248,39 @@ describe('earNoteSettings', () => {
     expect(await loadEarNoteSettings()).toEqual({ noteSet: 'chromatic' });
     await saveEarNoteSettings({ noteSet: 'natural' });
     expect(await loadEarNoteSettings()).toEqual({ noteSet: 'natural' });
+  });
+});
+
+describe('storage versioning and reset', () => {
+  it('stamps the storage version on first run', async () => {
+    await ensureStorageVersion();
+    expect(store.storageVersion).toBe(String(STORAGE_VERSION));
+  });
+
+  it('keeps existing stats when stamping the version', async () => {
+    await recordAttempt({ correct: true, currentStreak: 1, isFirstTry: true, isSolvedPrompt: true });
+    await ensureStorageVersion();
+    expect((await loadLifetimeStats()).totalAnswers).toBe(1);
+  });
+
+  it('resetAllStats clears stats but keeps settings', async () => {
+    await recordAttempt({ correct: true, currentStreak: 1, isFirstTry: true, isSolvedPrompt: true });
+    await recordSpeedGameScore(12);
+    await savePracticeMode('chromatic');
+    await saveFretRange({ start: 2, end: 7 });
+
+    await resetAllStats();
+
+    expect(await loadLifetimeStats()).toEqual(EMPTY_LIFETIME_STATS);
+    expect(await loadSpeedGameBestScore()).toBe(0);
+    expect(await loadPracticeMode()).toBe('chromatic');
+    expect(await loadFretRange()).toEqual({ start: 2, end: 7 });
+  });
+
+  it('loaders fall back to defaults on corrupt stored data', async () => {
+    store.lifetimeStats = '{not json';
+    store.fretRange = '"garbage"';
+    expect(await loadLifetimeStats()).toEqual(EMPTY_LIFETIME_STATS);
+    expect((await loadFretRange()).start).toBeDefined();
   });
 });

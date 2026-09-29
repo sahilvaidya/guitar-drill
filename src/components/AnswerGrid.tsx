@@ -44,8 +44,17 @@ export default function AnswerGrid({ choices, feedback, onSelect }: Props) {
                 style={[styles.button, { backgroundColor: colors.bg, borderColor: colors.border }]}
                 onPress={() => !disabled && onSelect(note)}
                 disabled={disabled}
+                accessibilityRole="button"
+                accessibilityLabel={note}
+                accessibilityState={{ disabled }}
+                accessibilityHint={
+                  state === 'correct' ? 'Correct answer'
+                  : state === 'incorrect' ? 'Incorrect answer' : undefined
+                }
               >
-                <Text style={[styles.label, { color: colors.text }]}>{note}</Text>
+                <Text style={[styles.label, { color: colors.text }]}>
+                  {state === 'correct' ? '✓ ' : state === 'incorrect' ? '✗ ' : ''}{note}
+                </Text>
               </Pressable>
             );
           })}
