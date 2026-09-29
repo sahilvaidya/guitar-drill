@@ -22,6 +22,14 @@ export default function StudyLayout() {
         options={{ title: 'CAGED System' }}
       />
       <Stack.Screen
+        name="intervals"
+        options={{ title: 'Intervals' }}
+      />
+      <Stack.Screen
+        name="pentatonic"
+        options={{ title: 'Pentatonic Scales' }}
+      />
+      <Stack.Screen
         name="chords"
         options={{ title: 'Chord Shapes' }}
       />

@@ -73,15 +73,13 @@ export default function StudyHomeScreen() {
         title="Intervals"
         description="Half steps, whole steps, and the building blocks of harmony."
         icon="git-branch"
-        onPress={() => {}}
-        available={false}
+        onPress={() => router.push('/study/intervals')}
       />
       <StudyTopicCard
         title="Pentatonic Scales"
         description="The most common scales in rock and blues guitar."
         icon="layers"
-        onPress={() => {}}
-        available={false}
+        onPress={() => router.push('/study/pentatonic')}
       />
 
       <Text style={styles.sectionHeader}>Systems</Text>
