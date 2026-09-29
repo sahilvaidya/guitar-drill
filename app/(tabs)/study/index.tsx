@@ -68,18 +68,12 @@ export default function StudyHomeScreen() {
         onPress={() => router.push('/study/triads')}
       />
 
-      <Text style={styles.sectionHeader}>Scales & Intervals</Text>
+      <Text style={styles.sectionHeader}>Theory</Text>
       <StudyTopicCard
-        title="Intervals"
-        description="Half steps, whole steps, and the building blocks of harmony."
+        title="Scales & Keys"
+        description="Major vs minor, the circle of fifths, and how to build any scale."
         icon="git-branch"
-        onPress={() => router.push('/study/intervals')}
-      />
-      <StudyTopicCard
-        title="Pentatonic Scales"
-        description="The most common scales in rock and blues guitar."
-        icon="layers"
-        onPress={() => router.push('/study/pentatonic')}
+        onPress={() => router.push('/study/theory')}
       />
 
       <Text style={styles.sectionHeader}>Systems</Text>

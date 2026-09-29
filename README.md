@@ -73,12 +73,12 @@ as roadmap items are completed.
 - **CAGED System**: the five pentatonic boxes and five full scale positions
   up the neck, with a Major/Minor toggle that relabels every scale degree
   for the relative key — plus harmonized two-string thirds and sixths runs.
-- **Intervals**: all twelve intervals from minor 2nd to octave with a
-  character description, the note above C, where to find it on the neck
-  (strings and frets from the lower note), and a reference song.
-- **Pentatonic Scales**: major/minor toggle and a 12-key picker showing the
-  spelled notes, formula, relative key, blues note (minor), where the root
-  sits on the low E and A strings, and a Box 1 diagram.
+- **Scales & Keys**: music theory reference in three parts — the major vs
+  minor split (relative vs parallel keys, diatonic chords), an interactive
+  circle of fifths (tap a key for its signature and neighbours, plus how to
+  read sharps/flats), and how to build major, minor, harmonic/melodic minor,
+  dorian, mixolydian, pentatonic and blues scales in any of 12 roots from
+  their whole/half-step recipes.
 
 ### Settings & Stats
 
