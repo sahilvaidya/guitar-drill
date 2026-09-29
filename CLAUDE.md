@@ -43,7 +43,6 @@ app/            Expo Router screens
   drill.tsx     Note Finder drill loop
   settings.tsx  Settings: mode, fret range, recent misses
 __tests__/      Jest unit tests mirroring src/ structure
-archived-swift/ Original Swift/SwiftUI project — kept for reference, delete when stable
 ```
 
 ## Iteration Principles

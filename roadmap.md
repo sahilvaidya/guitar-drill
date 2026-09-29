@@ -34,7 +34,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 
 ## Completed Capabilities
 
-- SwiftUI iPhone app (archived in `archived-swift/`)
+- Original SwiftUI iPhone app (removed from the repo after the Expo migration; see git history)
 - Migrated to Expo SDK 56 / React Native / TypeScript
 - Standard-tuned six-string fretboard renders frets 0–12 with one active prompt dot
 - Natural-note quiz loop (A–G answers)
