@@ -73,9 +73,12 @@ as roadmap items are completed.
 - **CAGED System**: the five pentatonic boxes and five full scale positions
   up the neck, with a Major/Minor toggle that relabels every scale degree
   for the relative key — plus harmonized two-string thirds and sixths runs.
-- **Intervals**: diatonic 3rds (adjacent-string pairs e+B, B+G, G+D) and
-  6ths (skipping a string: e+G, B+D) in C major, with the M/m quality of each
-  step labelled — a 3rds / 6ths toggle on a dedicated page.
+- **Scales & Keys**: music theory reference in three parts — the major vs
+  minor split (relative vs parallel keys, diatonic chords), an interactive
+  circle of fifths (tap a key for its signature and neighbours, plus how to
+  read sharps/flats), and how to build major, minor, harmonic/melodic minor,
+  dorian, mixolydian, pentatonic and blues scales in any of 12 roots from
+  their whole/half-step recipes.
 
 ### Settings & Stats
 

@@ -22,8 +22,8 @@ export default function StudyLayout() {
         options={{ title: 'CAGED System' }}
       />
       <Stack.Screen
-        name="intervals"
-        options={{ title: 'Intervals' }}
+        name="theory"
+        options={{ title: 'Scales & Keys' }}
       />
       <Stack.Screen
         name="chords"
