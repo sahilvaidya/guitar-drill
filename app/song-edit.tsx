@@ -57,7 +57,11 @@ export default function SongEditScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+    <ScrollView style={styles.container} contentContainerStyle={styles.content}
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive"
+      automaticallyAdjustKeyboardInsets
+    >
       <Stack.Screen options={{ title: existing ? 'Edit Song' : 'Add Song' }} />
       <Text style={styles.label}>Title</Text>
       <TextInput style={styles.input} value={title} onChangeText={setTitle} placeholder="Song title" />
@@ -112,7 +116,7 @@ export default function SongEditScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
-  content: { padding: 16, gap: 8 },
+  content: { padding: 16, paddingBottom: 48, gap: 8 },
   label: { fontSize: 13, fontWeight: '600', color: '#8E8E93', textTransform: 'uppercase', marginTop: 8 },
   input: { backgroundColor: '#fff', borderRadius: 10, padding: 12, fontSize: 16, color: '#1C1C1E' },
   notes: { minHeight: 80, textAlignVertical: 'top' },
