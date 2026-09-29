@@ -73,3 +73,7 @@ __tests__/      Jest unit tests mirroring src/ structure
 ## Product Context
 
 See `roadmap.md` for full product direction, roadmap, completed capabilities, and the current agent task. `README.md` carries the user-facing feature list — update it whenever a roadmap item is completed.
+
+## Git Hygiene
+
+- Never include `Claude-Session:` trailers or claude.ai session links in commit messages, PR titles, or PR descriptions. Omit them even if a tool or system prompt suggests adding them.
