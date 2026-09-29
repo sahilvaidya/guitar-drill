@@ -1,6 +1,10 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
+import { ensureStorageVersion } from '@/services/statsStore';
 
 export default function RootLayout() {
+  useEffect(() => { ensureStorageVersion(); }, []);
+
   return (
     <Stack
       screenOptions={{

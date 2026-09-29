@@ -80,6 +80,13 @@ as roadmap items are completed.
 - Configurable fret range (0–12) respected by every drill
 - Session and lifetime stats, response timing, recent misses — all persisted
   locally on device
+- Reset all stats from Settings (settings like mode and fret range are kept)
+
+## Privacy
+
+Guitar Drill collects no data. There is no account, analytics, or network
+access; stats and settings live only on your device. See
+[`docs/privacy-policy.md`](docs/privacy-policy.md).
 
 ## Development
 
@@ -87,6 +94,7 @@ as roadmap items are completed.
 npm install
 npx expo start                                  # dev server (press i for iOS Simulator)
 npm test                                        # run unit tests
+npx tsc --noEmit                                # typecheck (also run in CI)
 eas build --platform ios --profile production   # cloud build
 eas update --branch production --message "..."  # OTA update (JS-only changes)
 ```
