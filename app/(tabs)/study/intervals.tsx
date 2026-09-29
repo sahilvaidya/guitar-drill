@@ -1,98 +1,131 @@
-import React from 'react';
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import {
-  ALL_INTERVALS,
-  INTERVAL_FULL_NAMES,
-  INTERVAL_SEMITONES,
-  INTERVAL_SONG_HINTS,
-  IntervalName,
-} from '@/domain/earInterval';
-import { INTERVAL_CHARACTER, describeShape, noteAbove } from '@/domain/intervalStudy';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { IntervalRun, SIXTHS_RUNS, THIRDS_RUNS } from '@/domain/cagedShapes';
+import { GUITAR_STRINGS } from '@/domain/guitarString';
+import IntervalRunView from '@/components/IntervalRunView';
 
-const COLOR = '#007AFF';
-const EXAMPLE_ROOT = 'C';
+type Section = 'thirds' | 'sixths';
 
-function IntervalCard({ interval }: { interval: IntervalName }) {
-  const semitones = INTERVAL_SEMITONES[interval];
-  return (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <View style={[styles.badge, { backgroundColor: COLOR + '1A' }]}>
-          <Text style={[styles.badgeText, { color: COLOR }]}>{interval}</Text>
-        </View>
-        <Text style={styles.cardTitle}>{INTERVAL_FULL_NAMES[interval]}</Text>
-        <Text style={styles.semitones}>
-          {semitones} {semitones === 1 ? 'fret' : 'frets'}
-        </Text>
-      </View>
-      <Text style={styles.character}>{INTERVAL_CHARACTER[interval]}</Text>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Example</Text>
-        <Text style={styles.rowValue}>
-          {EXAMPLE_ROOT} → {noteAbove(EXAMPLE_ROOT, interval)}
-        </Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>On the neck</Text>
-        <Text style={styles.rowValue}>{describeShape(interval)}</Text>
-      </View>
-      <View style={styles.row}>
-        <Text style={styles.rowLabel}>Sounds like</Text>
-        <Text style={styles.rowValue}>{INTERVAL_SONG_HINTS[interval]}</Text>
-      </View>
-    </View>
-  );
+const SECTION_LABEL: Record<Section, string> = {
+  thirds: '3rds',
+  sixths: '6ths',
+};
+
+const SECTION: Record<
+  Section,
+  { runs: IntervalRun[]; color: string; intro: string; legend: string }
+> = {
+  thirds: {
+    runs: THIRDS_RUNS,
+    color: '#34C759',
+    intro:
+      'Diatonic thirds on each adjacent pair of the first four strings. The bottom dot is ' +
+      'the scale note, the top dot is the third above it in the key. The quality alternates ' +
+      'between major (M3) and minor (m3) thirds as you walk up the scale.',
+    legend: 'M3 = 4 semitones · m3 = 3 semitones',
+  },
+  sixths: {
+    runs: SIXTHS_RUNS,
+    color: '#FF9500',
+    intro:
+      'Diatonic sixths skip a string: the scale note sits on the lower string and its sixth ' +
+      'rings on the string two above it. Mute the string in between. Major sixths (M6) sit at ' +
+      'the same fret on both strings; minor sixths (m6) pull the top note back one fret.',
+    legend: 'M6 = 9 semitones · m6 = 8 semitones',
+  },
+};
+
+function pairLabel(run: IntervalRun): string {
+  const upper = GUITAR_STRINGS[run.upperString].label;
+  const lower = GUITAR_STRINGS[run.lowerString].label;
+  return `${upper} + ${lower} strings`;
 }
 
 export default function IntervalsScreen() {
+  const [section, setSection] = useState<Section>('thirds');
+  const { runs, color, intro, legend } = SECTION[section];
+
   return (
-    <ScrollView contentContainerStyle={styles.content} style={styles.container}>
-      <View style={styles.card}>
-        <Text style={styles.introTitle}>Half steps and whole steps</Text>
-        <Text style={styles.introText}>
-          An interval is the distance between two notes. The smallest distance is a half step
-          (one semitone) — exactly one fret on the guitar. A whole step is two frets.
-          {'\n\n'}
-          Intervals are named by counting letter names (C to E is a 3rd) and qualified by their
-          size in half steps: major (M) and minor (m) for 2nds, 3rds, 6ths and 7ths, perfect (P)
-          for 4ths, 5ths and octaves, and the tritone (TT) in the middle.
-        </Text>
-        <Text style={styles.introText}>
-          Shapes below are measured from the lower note on the E·A·D·G strings. When a shape
-          crosses from the G string to the B string, add one fret.
-        </Text>
+    <View style={styles.container}>
+      <View style={styles.segmentedWrapper}>
+        <View style={styles.segmented}>
+          {(Object.keys(SECTION_LABEL) as Section[]).map(s => (
+            <Pressable
+              key={s}
+              style={[styles.segment, section === s && styles.segmentActive]}
+              onPress={() => setSection(s)}
+            >
+              <Text style={[styles.segmentText, section === s && styles.segmentTextActive]}>
+                {SECTION_LABEL[s]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
       </View>
 
-      {ALL_INTERVALS.map(interval => (
-        <IntervalCard key={interval} interval={interval} />
-      ))}
-    </ScrollView>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        <View style={styles.introCard}>
+          <Text style={styles.introText}>{intro}</Text>
+          <Text style={styles.legend}>{legend}</Text>
+        </View>
+        {runs.map((run, i) => (
+          <View key={i} style={styles.card}>
+            <View style={styles.cardHeader}>
+              <View style={[styles.badge, { backgroundColor: color + '1A' }]}>
+                <Text style={[styles.badgeText, { color }]}>{pairLabel(run)}</Text>
+              </View>
+              <Text style={styles.cardSubtitle}>One octave in C major</Text>
+            </View>
+            <IntervalRunView run={run} color={color} />
+          </View>
+        ))}
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F2F2F7' },
-  content: { padding: 16, paddingBottom: 40, gap: 12 },
+  segmentedWrapper: { paddingHorizontal: 16, paddingVertical: 12 },
+  segmented: {
+    flexDirection: 'row',
+    backgroundColor: '#E5E5EA',
+    borderRadius: 10,
+    padding: 3,
+    gap: 3,
+  },
+  segment: {
+    flex: 1, paddingVertical: 7, borderRadius: 8,
+    alignItems: 'center', backgroundColor: 'transparent',
+  },
+  segmentActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.10, shadowRadius: 2, elevation: 2,
+  },
+  segmentText: { fontSize: 14, fontWeight: '500', color: '#1C1C1E' },
+  segmentTextActive: { fontWeight: '600', color: '#1C1C1E' },
+  scrollContent: { padding: 16, paddingTop: 4, gap: 14, paddingBottom: 40 },
+  introCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 16,
+    gap: 6,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+  },
+  introText: { fontSize: 14, color: '#8E8E93', lineHeight: 20 },
+  legend: { fontSize: 12, color: '#AEAEB2', fontWeight: '500' },
   card: {
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    gap: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    gap: 10,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
-  introTitle: { fontSize: 17, fontWeight: '700', color: '#1C1C1E' },
-  introText: { fontSize: 14, color: '#8E8E93', lineHeight: 20 },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20 },
-  badgeText: { fontSize: 13, fontWeight: '700' },
-  cardTitle: { flex: 1, fontSize: 16, fontWeight: '600', color: '#1C1C1E' },
-  semitones: { fontSize: 13, color: '#8E8E93' },
-  character: { fontSize: 14, color: '#3A3A3C', lineHeight: 20 },
-  row: { flexDirection: 'row', gap: 8 },
-  rowLabel: { width: 84, fontSize: 13, color: '#8E8E93' },
-  rowValue: { flex: 1, fontSize: 13, fontWeight: '500', color: '#1C1C1E' },
+  badgeText: { fontSize: 13, fontWeight: '700', letterSpacing: 0.2 },
+  cardSubtitle: { fontSize: 12, color: '#8E8E93', fontWeight: '500' },
 });
