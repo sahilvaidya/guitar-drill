@@ -1,3 +1,7 @@
+---
+title: Guitar Drill Privacy Policy
+---
+
 # Guitar Drill — Privacy Policy
 
 _Last updated: 2026-09-29_
@@ -21,4 +25,4 @@ or delete the app to remove everything it has stored.
 **Changes.** If this policy changes, the updated version will be published at
 this location with a new date.
 
-**Contact.** [ADD CONTACT EMAIL OR REPO ISSUES URL BEFORE PUBLISHING]
+**Contact.** [guitardrillsupport@gmail.com](mailto:guitardrillsupport@gmail.com)
