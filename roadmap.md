@@ -11,7 +11,7 @@ Future work should build on that working loop instead of treating the app like a
 - Portrait-first iPhone app (Expo React Native, fully offline)
 - Standard-tuned six-string fretboard, frets 0–12
 - Natural-note practice by default; optional chromatic mode with combined accidentals (C#/Db)
-- Practice tab: Note Identification (Training drill + Speed Game), Inverse Note Finder, and the Chord Detector tool
+- Practice tab: Note Identification (Training drill + Speed Game), Inverse Note Finder, and the Chord Detector tool, plus a Songs section (saved tab links + random song pick)
 - Ear tab: Interval Training drill with on-device tone synthesis (Note ID, Chord ID, Melodic Dictation planned)
 - Study tab: Chord Shapes library, Triads reference, and CAGED system (pentatonics, scale positions, thirds/sixths)
 - Note Finder drill screen with fretboard visualization, answer grid, and auto-advance
@@ -48,6 +48,7 @@ See `CLAUDE.md` for the full stack, architecture, and key commands.
 - Fretboard: marker dots at frets 3, 5, 7, 9; nut rendered at left edge
 - Unit tests: note mapping, quiz engine, stats persistence, adaptive engine, triad domain (56 tests)
 - Adaptive practice algorithm: `missCountStrategy` weights missed positions 5× higher; `WeightingStrategy` interface makes the algorithm pluggable
+- **Songs**: save tab links (Ultimate Guitar or anywhere) with title, artist, mastery level (Learning / Working on it / Solid / Mastered) and notes on parts to practice. "Practice a Random Song" on the Practice tab picks a saved song — weighted toward lower mastery and songs not practiced recently, never repeating the last pick — and opens its link externally. Domain `src/domain/song.ts`, persistence `src/services/songStore.ts`, store `src/store/useSongs.ts`, screens `app/songs.tsx` and `app/song-edit.tsx`
 - Home screen scaffold with Note Finder entry and disabled placeholders for future modes
 - Expo Router navigation: Home → Drill → Settings
 - EAS Build pipeline with TestFlight distribution
@@ -114,6 +115,12 @@ The Ear tab framework (section home with topic cards, offline tone synthesis in 
 - **Triad practice drill** — fill in the stubbed Practice tab on the Triads screen. Show a triad quality and root; the user selects the correct set of notes from an answer grid (or taps positions on the fretboard). Uses `triadNotes()` from `src/domain/triad.ts`. Adaptive weighting applies the same way as the Note Finder.
 
 - **Spaced repetition / review sessions** — a "Review" entry point (on the Home or Practice tab) that surfaces items due today based on a lightweight SRS schedule (e.g. SM-2 variant). Each item is a fret position, chord shape, or scale pattern. Review history stored in AsyncStorage alongside existing stats. Complements the existing adaptive engine (which weights by miss frequency) with a time-based forgetting curve.
+
+### Goal 5 — Practice log and recommendations
+
+- **Practice log** — a user-entered record of what was practiced (not auto-recorded). Each entry: date, duration (minutes), a category (e.g. fretboard notes, ear training, chords, scales, songs, technique, theory), an optional link to a saved song, and free-text notes. Quick-add from the Practice tab; songs picked via "Practice a Random Song" could offer a one-tap "log it" prompt. Persisted in AsyncStorage; new pure domain file `src/domain/practiceLog.ts` plus a store and screen.
+- **Aggregations** — weekly/monthly totals by category, streak of practice days, and time-per-song, all computed from the log in pure functions with unit tests.
+- **Recommendations** — surface what deserves more time based on the log and existing data: categories with little recent time, songs at low mastery that haven't been practiced lately, and drill areas with weak accuracy. Rule-based first (simple thresholds over the aggregations); no network or ML.
 
 ## Later Roadmap
 

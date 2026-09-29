@@ -37,6 +37,13 @@ as roadmap items are completed.
   pick which inversion of the 1 chord you're starting on and every other
   chord shows the closest triad shape (and fret) to it.
 
+- **Songs**: keep a list of songs you want to play, each with a link to its
+  tab (Ultimate Guitar, Songsterr, anything), a mastery level and notes on
+  which parts still need work. "Practice a Random Song" picks one for you —
+  weighted toward songs you know least and haven't played lately — and opens
+  the tab in its own app or browser. Nothing is downloaded or scraped; the
+  app just stores the links.
+
 ### Ear Training
 
 - **Interval Training**: hear two plucked notes and name the interval — from

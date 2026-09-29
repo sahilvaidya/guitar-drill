@@ -31,12 +31,14 @@ src/
   domain/       pure TS types and logic, no RN deps
                   noteName.ts, guitarString.ts, fretPosition.ts,
                   fretRange.ts, notePracticeMode.ts, quizPrompt.ts,
-                  earInterval.ts (ear-training intervals + prompt generation)
+                  earInterval.ts (ear-training intervals + prompt generation),
+                  song.ts (saved songs, mastery levels, weighted random pick)
   services/     QuizEngine (pure functions), StatsStore (AsyncStorage),
                   ToneSynth (offline Karplus-Strong synth → WAV, pure),
+                  SongStore (AsyncStorage persistence for saved songs),
                   EarAudio (expo-audio playback of cached synthesized WAVs)
   store/        Zustand stores, one per drill mode:
-                  usePracticeSession.ts, useSpeedGame.ts, useEarTraining.ts
+                  usePracticeSession.ts, useSpeedGame.ts, useEarTraining.ts, useSongs.ts
   components/   FretboardView (SVG), AnswerGrid, StatsChips
 app/            Expo Router screens
   (tabs)/       bottom tabs: Practice (index), Ear (ear training), Study
