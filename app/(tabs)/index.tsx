@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, SafeAreaView, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, SafeAreaView, Platform, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSongs } from '@/store/useSongs';
 
 interface DrillCardProps {
   title: string;
@@ -25,6 +26,20 @@ function DrillCard({ title, description, onPress, available = true }: DrillCardP
 
 export default function PracticeTab() {
   const router = useRouter();
+  const songCount = useSongs(s => s.songs.length);
+  const loadSongs = useSongs(s => s.load);
+  const pickForPractice = useSongs(s => s.pickForPractice);
+
+  React.useEffect(() => { loadSongs(); }, [loadSongs]);
+
+  const practiceRandomSong = async () => {
+    const song = await pickForPractice();
+    if (!song) {
+      router.push('/songs');
+      return;
+    }
+    Linking.openURL(song.url).catch(() => Alert.alert('Could not open link', song.url));
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -49,6 +64,21 @@ export default function PracticeTab() {
           title="Chord Numbers"
           description="Get a key and a numbered progression (1–7) — find each chord on the neck."
           onPress={() => router.push('/chord-number-practice')}
+        />
+        <Text style={styles.sectionHeader}>Songs</Text>
+        <DrillCard
+          title="Practice a Random Song"
+          description={
+            songCount === 0
+              ? 'Save songs first, then get a random pick weighted toward what needs work.'
+              : 'Opens a saved tab, favoring songs you know least or haven\'t played lately.'
+          }
+          onPress={practiceRandomSong}
+        />
+        <DrillCard
+          title="My Songs"
+          description="Save tab links with a mastery level and notes on what to practice."
+          onPress={() => router.push('/songs')}
         />
       </View>
     </SafeAreaView>
